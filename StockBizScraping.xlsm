@@ -1,4 +1,4 @@
-Public Function StockBizShareholder(stockCode)
+Public Function StockBizShareholder(stockcode)
     Dim ie As New InternetExplorer
     Dim doc As New HTMLDocument
     Dim pageData As Object
@@ -7,7 +7,7 @@ Public Function StockBizShareholder(stockCode)
     On Error GoTo ErrorHandler
     
     ie.Visible = True
-    ie.navigate "http://en.stockbiz.vn/Stocks/" + stockCode + "/MajorHolders.aspx"
+    ie.navigate "http://en.stockbiz.vn/Stocks/" + stockcode + "/MajorHolders.aspx"
     Do
         DoEvents
     Loop Until ie.readyState = READYSTATE_COMPLETE
@@ -61,7 +61,7 @@ Public Function StockBizVNeseName(stock_code)
     StockBizVNeseName = json("companyName")
 End Function
 
-Function StockBizEnglishName(stockCode)
+Function StockBizEnglishName(stockcode)
     Dim ie As New InternetExplorer
     Dim doc As New HTMLDocument
     Dim pageData As Object
@@ -69,8 +69,11 @@ Function StockBizEnglishName(stockCode)
     
     On Error GoTo ErrorHandler
     
-    ie.Visible = True
-    ie.navigate "http://en.stockbiz.vn/Stocks/" + stockCode + "/MajorHolders.aspx"
+    With ie
+        .Visible = True
+        .Silent = True
+        .navigate "http://en.stockbiz.vn/Stocks/" + stockcode + "/MajorHolders.aspx"
+    End With
     Do
         DoEvents
     Loop Until ie.readyState = READYSTATE_COMPLETE
@@ -78,14 +81,19 @@ Function StockBizEnglishName(stockCode)
     Set doc = ie.document
     Set pageData = doc.querySelector("table.ctl00_PlaceHolderContentArea_CenterZone_1 td.NoPadding div.CompanyTitle")
     
-    StockBizEnglishName = Left(pageData.innerText, InStr(1, pageData.innerText, " (" & stockCode) - 1)
+    Dim tempStr As String
+    tempStr = Left(pageData.innerText, InStr(1, pageData.innerText, " (" & stockcode) - 1)
     
+    If isVietnamese(tempStr) Then
+        StockBizEnglishName = "[VietStock] " & VietStockEnglishName(stockcode)
+    Else
+        StockBizEnglishName = tempStr
+    End If
     ie.Quit
     
 ErrorHandler:
     ie.Quit
     Exit Function
-    
 End Function
 
 Public Function StockBizWeb(stock_code)
@@ -205,7 +213,7 @@ Public Function StockBizWebStatus(webAddress)
     End With
 End Function
 
-Function StockBizBusinessDescription(stockCode)
+Function StockBizBusinessDescription(stockcode)
     Dim ie As New InternetExplorer
     Dim doc As New HTMLDocument
     Dim pageData As Object
@@ -214,7 +222,7 @@ Function StockBizBusinessDescription(stockCode)
     On Error GoTo ErrorHandler
     
     ie.Visible = True
-    ie.navigate "http://en.stockbiz.vn/Stocks/" + stockCode + "/Snapshot.aspx"
+    ie.navigate "http://en.stockbiz.vn/Stocks/" + stockcode + "/Snapshot.aspx"
     Do
         DoEvents
     Loop Until ie.readyState = READYSTATE_COMPLETE
@@ -251,7 +259,7 @@ Sub StockBizICB()
     Dim forIndex As Long
     Dim nextBoolean As Boolean
     Dim vneseName As String
-    Dim stockCode As String
+    Dim stockcode As String
     
     
     Dim ICBnameStr_0 As String
@@ -284,18 +292,40 @@ Sub StockBizICB()
     Dim ICBnameStr_9 As String
     ICBnameStr_9 = "{""9000"":""Technology"",""9500"":""Technology"",""9530"":""Software & Computer Services"",""9533"":""Computer Services"",""9535"":""Internet"",""9537"":""Software"",""9570"":""Technology Hardware & Equipment"",""9572"":""Computer Hardware"",""9574"":""Electronic Office Equipment"",""9576"":""Semiconductors"",""9578"":""Telecommunications Equipment""}"
     
-    On Error GoTo ErrorHandler
+    'On Error GoTo ErrorHandler
     
     Range("B:XFD").Clear
+    ActiveWindow.DisplayGridlines = False
     Range("A:A").Rows.RowHeight = 15
     With Range("B:XFD").Font
         .Name = "Georgia"
         .Size = 11
     End With
-    
-    Dim iRange As Range
-    Set iRange = Range(Cells(2, 7), Cells(2, 8))
-    With iRange
+    Dim irange As Range
+    With Cells(3, 2)
+        .VerticalAlignment = xlCenter
+        .HorizontalAlignment = xlLeft
+        .Font.Bold = True
+        .WrapText = False
+        .Value = "Client name"
+    End With
+    With Cells(4, 2)
+        .VerticalAlignment = xlCenter
+        .HorizontalAlignment = xlLeft
+        .Font.Bold = True
+        .WrapText = False
+        .Value = "Province, Vietnam"
+    End With
+    With Cells(5, 2)
+        .VerticalAlignment = xlCenter
+        .HorizontalAlignment = xlLeft
+        .Font.Bold = True
+        .WrapText = False
+        .Value = "Local BMS for manufacture/distribution of"
+    End With
+    rowIndex = 7
+    Set irange = Range(Cells(rowIndex, 7), Cells(rowIndex, 8))
+    With irange
         .Merge
         .HorizontalAlignment = xlCenterAcrossSelection
         .VerticalAlignment = xlCenter
@@ -304,8 +334,8 @@ Sub StockBizICB()
         .Font.Color = vbWhite
         .Font.Bold = True
     End With
-    Set iRange = Range(Cells(2, 9), Cells(2, 11))
-    With iRange
+    Set irange = Range(Cells(rowIndex, 9), Cells(rowIndex, 11))
+    With irange
         .Merge
         .HorizontalAlignment = xlCenterAcrossSelection
         .VerticalAlignment = xlCenter
@@ -314,8 +344,8 @@ Sub StockBizICB()
         .Font.Color = vbWhite
         .Font.Bold = True
     End With
-    Set iRange = Range(Cells(2, 12), Cells(2, 14))
-    With iRange
+    Set irange = Range(Cells(rowIndex, 12), Cells(rowIndex, 14))
+    With irange
         .Merge
         .HorizontalAlignment = xlCenterAcrossSelection
         .VerticalAlignment = xlCenter
@@ -324,8 +354,8 @@ Sub StockBizICB()
         .Font.Color = vbBlack
         .Font.Bold = True
     End With
-    Set iRange = Range(Cells(2, 15), Cells(2, 17))
-    With iRange
+    Set irange = Range(Cells(rowIndex, 15), Cells(rowIndex, 17))
+    With irange
         .Merge
         .HorizontalAlignment = xlCenterAcrossSelection
         .VerticalAlignment = xlCenter
@@ -334,118 +364,126 @@ Sub StockBizICB()
         .Font.Color = vbBlack
         .Font.Bold = True
     End With
-    Cells(3, 2) = "No."
+
+    rowIndex = rowIndex + 1
+    Cells(rowIndex, 2) = "No."
     Columns(2).ColumnWidth = 5.86
-    Cells(3, 3) = "Vietnamese Name"
+    Cells(rowIndex, 3) = "Vietnamese Name"
     Columns(3).ColumnWidth = 42
-    Cells(3, 4) = "English Name"
+    Cells(rowIndex, 4) = "English Name"
     Columns(4).ColumnWidth = 42
-    Cells(3, 5) = "Listed name"
+    Cells(rowIndex, 5) = "Listed name"
     Columns(5).ColumnWidth = 8.71
-    Cells(3, 6) = "Listed in"
+    Cells(rowIndex, 6) = "Listed in"
     Columns(6).ColumnWidth = 8.86
-    Cells(3, 7) = "Business Description"
+    Cells(rowIndex, 7) = "Business Description"
     Columns(7).ColumnWidth = 46.43
-    Cells(3, 8) = "Biggest shareholder"
+    Cells(rowIndex, 8) = "Biggest shareholder"
     Columns(8).ColumnWidth = 37.43
-    Cells(3, 9) = "Website"
+    Cells(rowIndex, 9) = "Website"
     Columns(9).ColumnWidth = 26.57
-    Cells(3, 10) = "Website obtained from web search"
+    Cells(rowIndex, 10) = "Website obtained from web search"
     Columns(10).ColumnWidth = 13
-    Cells(3, 11) = "Website Description"
+    Cells(rowIndex, 11) = "Website Description"
     Columns(11).ColumnWidth = 44.86
-    Cells(3, 12) = "Business description" & vbNewLine & "FY2021"
+    Cells(rowIndex, 12) = "Business description" & vbNewLine & "FY2021"
     Columns(12).ColumnWidth = 33.71
-    Cells(3, 13) = "Business segment" & vbNewLine & "FY2021"
+    Cells(rowIndex, 13) = "Business segment" & vbNewLine & "FY2021"
     Columns(13).ColumnWidth = 33.71
-    Cells(3, 14) = "Biggest shareholder" & vbNewLine & "FY2021"
+    Cells(rowIndex, 14) = "Biggest shareholder" & vbNewLine & "FY2021"
     Columns(14).ColumnWidth = 33.71
-    Cells(3, 15) = "Non-independence (25%)"
+    Cells(rowIndex, 15) = "Non-independence (25%)"
     Columns(15).ColumnWidth = 12
-    Cells(3, 16) = "Different functions"
+    Cells(rowIndex, 16) = "Different functions"
     Columns(16).ColumnWidth = 12
-    Cells(3, 17) = "Different products"
+    Cells(rowIndex, 17) = "Different products"
     Columns(17).ColumnWidth = 12
-    Cells(3, 18) = "Accept/Reject"
+    Cells(rowIndex, 18) = "Accept/Reject"
     Columns(18).ColumnWidth = 12
-    Cells(3, 19) = "Comments"
+    Cells(rowIndex, 19) = "Comments"
     Columns(19).ColumnWidth = 36
-    Cells(3, 20) = "Notes"
+    Cells(rowIndex, 20) = "Notes"
     Columns(20).ColumnWidth = 22.71
-    Rows(3).RowHeight = 59.25
-    Rows(3).WrapText = True
-    With Range(Cells(3, 2), Cells(3, 20))
+    With Range(Cells(rowIndex, 2), Cells(rowIndex, 20))
         .Interior.Color = HexToRGB("C00000")
         .Font.Color = vbWhite
         .HorizontalAlignment = xlCenterAcrossSelection
         .VerticalAlignment = xlCenter
     End With
-    Set iRange = Range(Cells(3, 2), Cells(3, 20))
-    For Each iCell In iRange
+    Set irange = Range(Cells(rowIndex, 2), Cells(rowIndex, 20))
+    For Each iCell In irange
         iCell.BorderAround _
             LineStyle:=xlContinuous, _
             Weight:=xlThin
     Next iCell
+    Rows(rowIndex).RowHeight = 59.25
+    Rows(rowIndex).WrapText = True
     
-    rowIndex = 4
+    rowIndex = rowIndex + 1
     ie.Visible = True
     
     Dim json As Object
     For Each cell In Range("A1:A20")
-        stockCode = cell.Value
+        stockcode = cell.Value
         
-        If stockCode <> "" Then
-            If Left(stockCode, 1) = "0" Then
+        If stockcode <> "" Then
+            If Len(stockcode) = 3 Then
+                stockcode = "0" & stockcode
+            End If
+        End If
+        
+        If stockcode <> "" Then
+            If Left(stockcode, 1) = "0" Then
                 Set json = JsonConverter.ParseJson(ICBnameStr_0)
-                Cells(rowIndex, 2) = stockCode + " - " + json(stockCode)
-            ElseIf Left(stockCode, 1) = "1" Then
+                Cells(rowIndex, 2) = stockcode + " - " + json(stockcode)
+            ElseIf Left(stockcode, 1) = "1" Then
                 Set json = JsonConverter.ParseJson(ICBnameStr_1)
-                Cells(rowIndex, 2) = stockCode + " - " + json(stockCode)
-            ElseIf Left(stockCode, 1) = "2" Then
-                If CInt(Left(stockCode, 3)) <= 272 Then
+                Cells(rowIndex, 2) = stockcode + " - " + json(stockcode)
+            ElseIf Left(stockcode, 1) = "2" Then
+                If CInt(Left(stockcode, 3)) <= 272 Then
                     Set json = JsonConverter.ParseJson(ICBnameStr_2_1)
-                    Cells(rowIndex, 2) = stockCode + " - " + json(stockCode)
+                    Cells(rowIndex, 2) = stockcode + " - " + json(stockcode)
                 Else
                     Set json = JsonConverter.ParseJson(ICBnameStr_2_2)
-                    Cells(rowIndex, 2) = stockCode + " - " + json(stockCode)
+                    Cells(rowIndex, 2) = stockcode + " - " + json(stockcode)
                 End If
-            ElseIf Left(stockCode, 1) = "3" Then
-                If CInt(Left(stockCode, 2)) <= 35 Then
+            ElseIf Left(stockcode, 1) = "3" Then
+                If CInt(Left(stockcode, 2)) <= 35 Then
                     Set json = JsonConverter.ParseJson(ICBnameStr_3_1)
-                    Cells(rowIndex, 2) = stockCode + " - " + json(stockCode)
+                    Cells(rowIndex, 2) = stockcode + " - " + json(stockcode)
                 Else
                     Set json = JsonConverter.ParseJson(ICBnameStr_3_2)
-                    Cells(rowIndex, 2) = stockCode + " - " + json(stockCode)
+                    Cells(rowIndex, 2) = stockcode + " - " + json(stockcode)
                 End If
-            ElseIf Left(stockCode, 1) = "4" Then
+            ElseIf Left(stockcode, 1) = "4" Then
                 Set json = JsonConverter.ParseJson(ICBnameStr_4)
-                Cells(rowIndex, 2) = stockCode + " - " + json(stockCode)
-            ElseIf Left(stockCode, 1) = "5" Then
+                Cells(rowIndex, 2) = stockcode + " - " + json(stockcode)
+            ElseIf Left(stockcode, 1) = "5" Then
                 Set json = JsonConverter.ParseJson(ICBnameStr_5)
-                Cells(rowIndex, 2) = stockCode + " - " + json(stockCode)
-            ElseIf Left(stockCode, 1) = "6" Then
+                Cells(rowIndex, 2) = stockcode + " - " + json(stockcode)
+            ElseIf Left(stockcode, 1) = "6" Then
                 Set json = JsonConverter.ParseJson(ICBnameStr_6)
-                Cells(rowIndex, 2) = stockCode + " - " + json(stockCode)
-            ElseIf Left(stockCode, 1) = "7" Then
+                Cells(rowIndex, 2) = stockcode + " - " + json(stockcode)
+            ElseIf Left(stockcode, 1) = "7" Then
                 Set json = JsonConverter.ParseJson(ICBnameStr_6)
-                Cells(rowIndex, 2) = stockCode + " - " + json(stockCode)
-            ElseIf Left(stockCode, 1) = "8" Then
-                If CInt(Left(stockCode, 2)) <= 85 Then
+                Cells(rowIndex, 2) = stockcode + " - " + json(stockcode)
+            ElseIf Left(stockcode, 1) = "8" Then
+                If CInt(Left(stockcode, 2)) <= 85 Then
                     Set json = JsonConverter.ParseJson(ICBnameStr_8_1)
-                    Cells(rowIndex, 2) = stockCode + " - " + json(stockCode)
+                    Cells(rowIndex, 2) = stockcode + " - " + json(stockcode)
                 Else
                     Set json = JsonConverter.ParseJson(ICBnameStr_8_2)
-                    Cells(rowIndex, 2) = stockCode + " - " + json(stockCode)
+                    Cells(rowIndex, 2) = stockcode + " - " + json(stockcode)
                 End If
-            ElseIf Left(stockCode, 1) = "9" Then
+            ElseIf Left(stockcode, 1) = "9" Then
                 Set json = JsonConverter.ParseJson(ICBnameStr_9)
-                Cells(rowIndex, 2) = stockCode + " - " + json(stockCode)
+                Cells(rowIndex, 2) = stockcode + " - " + json(stockcode)
             End If
             
             'Cells(rowIndex, 2) = "'" + stockCode
             cellTempIndex = rowIndex
             rowIndex = rowIndex + 1
-            ie.navigate "https://www.stockbiz.vn/IndustryOverview.aspx?Code=" & stockCode
+            ie.navigate "https://www.stockbiz.vn/IndustryOverview.aspx?Code=" & stockcode
             Do
                 DoEvents
             Loop Until ie.readyState = READYSTATE_COMPLETE
@@ -453,16 +491,14 @@ Sub StockBizICB()
             Set tableData = doc.querySelector("table.dataTable tbody")
     
             'rowIndex =
+            nextBoolean = True
+            Dim pageCount As Integer
+            pageCount = 1
             Do
                 Set doc = ie.document
                 Set tableData = doc.querySelector("table.dataTable tbody")
                 If tableData Is Nothing Then
                     Exit Do
-                End If
-                If doc.querySelector("table.dataTable tbody").Children.Length = 21 Then
-                    nextBoolean = True
-                Else
-                    nextBoolean = False
                 End If
             
                 forIndex = tableData.Children.Length - 1
@@ -503,10 +539,17 @@ Sub StockBizICB()
                 cellCount = cellCount + i - 1
                 
                 NextLength = doc.querySelector("div.pageNavigation").Children.Length
+                Dim tempStr As String
+                tempStr = Left(doc.querySelector("div.pageNavigation").Children.Item(NextLength - 1).innerText, 1)
                 NextLength = NextLength - 1
-                Set StBzNext = doc.querySelector("div.pageNavigation").Children.Item(NextLength)
-                StBzNext.Click
-                Application.Wait Now + #12:00:02 AM#
+                If tempStr <> "T" Then
+                    nextBoolean = False
+                Else
+                    Set StBzNext = doc.querySelector("div.pageNavigation").Children.Item(NextLength)
+                    StBzNext.Click
+                    Application.Wait Now + #12:00:02 AM#
+                    pageCount = pageCount + 1
+                End If
             Loop While nextBoolean = True
                 
             With Range(Cells(cellTempIndex, 2), Cells(cellTempIndex, 20))
@@ -554,7 +597,7 @@ Sub createLink()
     Dim runIndex As Integer
     Dim runBln As Boolean
     Dim i As LongLong
-    Dim stockCode As String
+    Dim stockcode As String
     
     runBln = True
     runIndex = 0
@@ -564,10 +607,14 @@ Sub createLink()
         If IsEmpty(Cells(i, 1)) = True Then
             runIndex = runIndex + 1
         Else
-            stockCode = Cells(i, 1).Value
-            stockCode = Replace(stockCode, " ", "")
-            ActiveCell.Hyperlinks.Add Anchor:=Cells(i, 2), Address:="http://en.stockbiz.vn/Stocks/" + stockCode + "/Snapshot.aspx"
+            stockcode = Cells(i, 1).Value
+            stockcode = Replace(stockcode, " ", "")
+            ActiveCell.Hyperlinks.Add Anchor:=Cells(i, 2), Address:="http://en.stockbiz.vn/Stocks/" + stockcode + "/Snapshot.aspx"
             Cells(i, 2).Font.Size = 16
+            Dim tempLink As String
+            tempLink = StockBizWeb(Cells(i, 1).Value)
+            Cells(i, 3).Hyperlinks.Add Anchor:=Cells(i, 3), Address:=tempLink
+            Cells(i, 3).Font.Size = 16
             Rows(i).RowHeight = 30
             Rows(i).VerticalAlignment = xlCenter
             runIndex = 0
@@ -583,8 +630,8 @@ Sub StockBizICBAll()
     Range("A:XFD").ClearContents
     
     Dim ICBList As Variant
-    'ICBList = Array("0533", "0537", "0573", "0577", "0583", "0587", "1353", "1357", "1733", "1737", "1753", "1755", "1757", "1771", "1773", "1775", "1777", "1779", "2353", "2357", "2713", "2717", "2723", "2727", "2733", "2737", "2753", "2757", "2771", "2773", "2775", "2777", "2779", "2791", "2793", "2795", "2797", "2799", "3353", "3355", "3357", "3533", "3535", "3537", "3573", "3577", "3722", "3724", "3726", "3728", "3743", "3745", "3747", "3763", "3765", "3767", "3785", "4533", "4535", "4537", "4573", "4577", "5333", "5337", "5371", "5373", "5375", "5377", "5379", "5553", "5555", "5557", "5751", "5752", "5753", "5755", "5759", "6535", "6575", "7535", "7537", "7573", "7575", "7577", "8355", "8532", "8534", "8536", "8538", "8575", "8581", "8633", "8637", "8671", "8672", "8673", "8674", "8675", "8676", "8677", "8771", "8773", "8775", "8777", "8779", "8781", "8985", "8995", "9533", "9535", "9537", "9572", "9574", "9576", "9578")
-    ICBList = Array("2357")
+    ICBList = Array("0533", "0537", "0573", "0577", "0583", "0587", "1353", "1357", "1733", "1737", "1753", "1755", "1757", "1771", "1773", "1775", "1777", "1779", "2353", "2357", "2713", "2717", "2723", "2727", "2733", "2737", "2753", "2757", "2771", "2773", "2775", "2777", "2779", "2791", "2793", "2795", "2797", "2799", "3353", "3355", "3357", "3533", "3535", "3537", "3573", "3577", "3722", "3724", "3726", "3728", "3743", "3745", "3747", "3763", "3765", "3767", "3785", "4533", "4535", "4537", "4573", "4577", "5333", "5337", "5371", "5373", "5375", "5377", "5379", "5553", "5555", "5557", "5751", "5752", "5753", "5755", "5759", "6535", "6575", "7535", "7537", "7573", "7575", "7577", "8355", "8532", "8534", "8536", "8538", "8575", "8581", "8633", "8637", "8671", "8672", "8673", "8674", "8675", "8676", "8677", "8771", "8773", "8775", "8777", "8779", "8781", "8985", "8995", "9533", "9535", "9537", "9572", "9574", "9576", "9578")
+    'ICBList = Array("2373", "3355")
     
     Dim rowIndex As Integer
     rowIndex = 1
@@ -613,25 +660,15 @@ Sub StockBizICBAll()
         Loop Until ie.readyState = READYSTATE_COMPLETE
         
         Dim doc As New HTMLDocument
-        Set doc = ie.document
-        
         Dim tableData As Object
-        Set tableData = doc.querySelector("table.dataTable tbody")
-        
-        Dim test As Object
-        Set test = doc.querySelector("div.pageNavigation").Children
-        Dim testStr As Integer
-        testStr = CInt(doc.querySelector("div.pageNavigation").Children.Length) - 1
-        Set test = doc.querySelector("div.pageNavigation").Children.Item(testStr)
-        
+        Dim pageCount As Integer
+        pageCount = 1
+        nextBoolean = True
         Do
+            Set doc = ie.document
+            Set tableData = doc.querySelector("table.dataTable tbody")
             If tableData Is Nothing Then
                 Exit Do
-            Else
-                Dim pageNavigationInt As Integer
-                pageNavigationInt = CInt(doc.querySelector("div.pageNavigation").Children.Length) - 1
-                'doc.querySelector("div.pageNavigation").Children.Item(doc.querySelector("div.pageNavigation").Children.Length).Click
-                nextBoolean = True
             End If
             
             Set doc = ie.document
@@ -648,23 +685,30 @@ Sub StockBizICBAll()
                     Else
                         compnCode = Left(compnCode, Len(compnCode) - 2)
                     End If
-                    Cells(rowIndex, 4) = compnCode
-                    Cells(rowIndex, 1) = rowIndex - ICBIndex - 1
-                    Cells(rowIndex, 2) = Left(vneseName, Len(vneseName))
-                    Cells(rowIndex, 3) = StockBizEnglishName(compnCode)
-                    Cells(rowIndex, 5) = StockBizExchange(compnCode)
-                    Cells(rowIndex, 6) = StockBizBusinessDescription(compnCode)
-                    Cells(rowIndex, 7) = StockBizShareholder(compnCode)
-                    Cells(rowIndex, 8) = StockBizWeb(compnCode)
+                    Cells(rowIndex, 2) = compnCode
+                    Cells(rowIndex, 1) = rowIndex
+                    'Cells(rowIndex, 2) = Left(vneseName, Len(vneseName))
+                    Cells(rowIndex, 3) = "'" + ICBList(ICBIndex)
+                    'Cells(rowIndex, 5) = StockBizExchange(compnCode)
+                    'Cells(rowIndex, 6) = StockBizBusinessDescription(compnCode)
+                    'Cells(rowIndex, 7) = StockBizShareholder(compnCode)
+                    'Cells(rowIndex, 8) = StockBizWeb(compnCode)
                     rowIndex = rowIndex + 1
                 Next i
             End If
             
             NextLength = doc.querySelector("div.pageNavigation").Children.Length
+            Dim tempStr As String
+            tempStr = Left(doc.querySelector("div.pageNavigation").Children.Item(NextLength - 1).innerText, 1)
             NextLength = NextLength - 1
-            Set StBzNext = doc.querySelector("div.pageNavigation").Children.Item(NextLength)
-            StBzNext.Click
-            Application.Wait Now + #12:00:02 AM#
+            If tempStr <> "T" Then
+                nextBoolean = False
+            Else
+                Set StBzNext = doc.querySelector("div.pageNavigation").Children.Item(NextLength)
+                StBzNext.Click
+                Application.Wait Now + #12:00:02 AM#
+                pageCount = pageCount + 1
+            End If
         Loop While nextBoolean = True
     Next ICBIndex
     ie.Quit
@@ -774,15 +818,15 @@ Public Sub VNeseFS_Beta()
     token_2 = "wZDZjY2ExMDc2MWUyOWMyNCIsImFtciI6WyJwYXNzd29yZCJdfQ.VQYlpwEn8Qx6f9CiUVX7d6YP7x6QpfBrOs3td1bjicS1mpIneOO95yxRjDmYFdSFHNG1SpJwof0cvu6bfiuCcl08HPaQscOqv0497y-Z5L8qk9T4EDJfRtMauBTSiR8k1sv21W6-7qZvjTrgGdDWhGojYNadZs0hXnmV0wv-Kx9_bEkUhzt9O78QI9Y1Vb6pjBKhKMk0jQqlLmI_CqLlZ0JJk8Hgr9vcUX91JL5oIieyKcRfZ2gbcSfLpAxSxeEpkU4HWJ-C5B1rqokDjfAJ9fTHM_yRY6zmCz6PljEf0Xoc865br3lRWKSXhjSu127hIQlDmH_rVoZU9JdnekHsLA"
     blnAsync = True
     
-    Dim iRange As Range
+    Dim irange As Range
     Dim columnIndex As Integer
     columnIndex = 1
     'Header
     Dim itemArray As Variant
     itemArray = Array("No.", "Vietnamese Name", "English Name", "Listed Name", "Listed in", "Province")
     For Each Item In itemArray
-        Set iRange = Range(Cells(4, columnIndex), Cells(5, columnIndex))
-        With iRange
+        Set irange = Range(Cells(4, columnIndex), Cells(5, columnIndex))
+        With irange
             .Merge
             .HorizontalAlignment = xlCenterAcrossSelection
             .VerticalAlignment = xlCenter
@@ -791,8 +835,8 @@ Public Sub VNeseFS_Beta()
         columnIndex = columnIndex + 1
     Next Item
     'Closing date
-    Set iRange = Range(Cells(4, columnIndex), Cells(4, columnIndex + noFS - 1))
-    With iRange
+    Set irange = Range(Cells(4, columnIndex), Cells(4, columnIndex + noFS - 1))
+    With irange
         .Merge
         .HorizontalAlignment = xlCenterAcrossSelection
         .VerticalAlignment = xlCenter
@@ -807,8 +851,8 @@ Public Sub VNeseFS_Beta()
     
     itemArray = Array("Sales", "Cost of goods sold", "Gross Profit", "Selling expenses", "SG & A", "EBIT")
     For Each Item In itemArray
-        Set iRange = Range(Cells(4, columnIndex), Cells(4, columnIndex + noFS - 1 + 2))
-        With iRange
+        Set irange = Range(Cells(4, columnIndex), Cells(4, columnIndex + noFS - 1 + 2))
+        With irange
             .Merge
             .HorizontalAlignment = xlCenterAcrossSelection
             .VerticalAlignment = xlCenter
@@ -830,8 +874,8 @@ Public Sub VNeseFS_Beta()
         columnIndex = columnIndex + 1
     Next Item
     'Total Cost
-    Set iRange = Range(Cells(4, columnIndex), Cells(4, columnIndex + noFS - 1 + 1))
-    With iRange
+    Set irange = Range(Cells(4, columnIndex), Cells(4, columnIndex + noFS - 1 + 1))
+    With irange
         .Merge
         .HorizontalAlignment = xlCenterAcrossSelection
         .VerticalAlignment = xlCenter
@@ -850,8 +894,8 @@ Public Sub VNeseFS_Beta()
     
     itemArray = Array("Return on Sales (ROS)", "Mark Up on Total Cost(MOTC)")
     For Each Item In itemArray
-        Set iRange = Range(Cells(4, columnIndex), Cells(4, columnIndex + noFS - 1 + 1))
-        With iRange
+        Set irange = Range(Cells(4, columnIndex), Cells(4, columnIndex + noFS - 1 + 1))
+        With irange
             .Merge
             .HorizontalAlignment = xlCenterAcrossSelection
             .VerticalAlignment = xlCenter
@@ -869,7 +913,7 @@ Public Sub VNeseFS_Beta()
         columnIndex = columnIndex + 1
     Next Item
     
-    Dim StrTest As String
+    Dim strTest As String
     
     Dim json As Object
     Dim itemCount As Integer
@@ -1053,7 +1097,10 @@ ExitLoop:
         itemCount = itemCount + 1
     Next cell
 End Sub
-Public Sub VNeseFS_Test(stockCode As String, studyyear As Integer)
+Public Function VietStockReference(stockcode As String)
+    VietStockReference = "https://finance.vietstock.vn/" + stockcode + "/profile.htm"
+End Function
+Public Sub VNeseFS_Test(stockcode As String, studyyear As Integer)
     Dim ie As New InternetExplorer
     Dim doc As New HTMLDocument
     Dim pageData As Object
@@ -1083,7 +1130,7 @@ Public Sub VNeseFS_Test(stockCode As String, studyyear As Integer)
 
     Set doc = ie.document
     'Set testVar = doc.querySelector("ul#pt9\:smc2\:\:pop").Children.Item(1).Children.Item(0).Children.Item(2)
-    doc.querySelector("input#pt9\:it8112\:\:content").Value = stockCode
+    doc.querySelector("input#pt9\:it8112\:\:content").Value = stockcode
     doc.querySelector("ul#pt9\:smc2\:\:pop").Children.Item(1).Children.Item(0).Children.Item(2).Click
     doc.querySelector("input#pt9\:id1\:\:content").Value = "30/06/" & studyyear
     doc.querySelector("input#pt9\:id2\:\:content").Value = "30/06/" & studyyear + 1
@@ -1162,3 +1209,75 @@ Function ROS(NS, COGS, SE, GAE)
     End If
 End Function
 
+Function isVietnamese(tempStr) As Boolean
+    Dim tempBln As Boolean
+    tempBln = False
+    If InStr(1, LCase(tempStr), "ctcp", vbTextCompare) > 0 Then
+        isVietnamese = True
+        Exit Function
+    End If
+    
+    Dim testStr As String
+    For i = 1 To Len(tempStr)
+        testStr = Mid(tempStr, i, 1)
+        If IsVietnameseCharacter(testStr) Then
+            isVietnamese = True
+            Exit Function
+        End If
+    Next i
+    
+End Function
+
+Function IsVietnameseCharacter(character As String) As Boolean
+    Dim charCode As Integer
+    charCode = AscW(character)
+    
+    Dim VNeseChar As Variant
+    VNeseChar = Array("224", "225", "226", "227", "232", "233", "234", "236", "237", "242", "243", "244", "245", "249", "250", "253", "259", "273", "297", "361", "417", "432", "7841", "7843", "7845", "7847", "7849", "7851", "7853", "7855", "7857", "7859", "7861", "7863", "7865", "7867", "7869", "7871", "7873", "7875", "7877", "7879", "7881", "7883", "7885", "7887", "7889", "7891", "7893", "7895", "7897", "7899", "7901", "7903", "7905", "7907", "7909", "7911", "7913", "7915", "7917", "7919", "7921", "7923", "7925", "7927", "7929")
+    
+    For i = 0 To 66
+    Debug.Print VNeseChar(i)
+        If CStr(charCode) = VNeseChar(i) Then
+            IsVietnameseCharacter = True
+            Exit Function
+        End If
+    Next i
+End Function
+
+Function VietStockEnglishName(stockcode)
+    Dim ie As New InternetExplorer
+    Dim doc As New HTMLDocument
+    Dim pageData As Object
+    Dim data As String
+    
+    On Error GoTo ErrorHandler
+    
+    With ie
+        .Visible = True
+        .Silent = True
+        .navigate "https://finance.vietstock.vn/" + stockcode + "/profile.htm?languageid=2"
+    End With
+
+    Do
+        DoEvents
+    Loop Until ie.readyState = READYSTATE_COMPLETE
+    
+    Set doc = ie.document
+    Set pageData = doc.querySelector("h1.h1-title b")
+    
+    Dim tempStr As String
+    tempStr = pageData.innerText
+    
+    If Right(tempStr, 1) = " " Then
+        VietStockEnglishName = Left(tempStr, Len(tempStr) - 1)
+    Else
+        VietStockEnglishName = tempStr
+    End If
+    
+    ie.Quit
+    
+ErrorHandler:
+    ie.Quit
+    Exit Function
+
+End Function
