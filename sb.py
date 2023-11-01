@@ -83,7 +83,7 @@ except:
     print("Create new temp folder")
 
 path = r'C:\Users\vtung010\Downloads\Stockbiz Scraping\Python\Python'
-wb = openpyxl.load_workbook("Excel/test.xlsx")
+wb = openpyxl.load_workbook("Excel/input.xlsx")
 ws_input = wb["Sheet1"]
 ws_input.sheet_view.showGridLines = False
 
@@ -283,4 +283,4 @@ chrome.quit()
 chrome2.quit()
 print(' -------------------')    
 print("Save file")
-wb.save('test-output.xlsx')
+wb.save('Local Search & Screenshot.xlsx')
