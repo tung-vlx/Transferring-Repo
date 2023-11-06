@@ -1,0 +1,89 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.2/css/all.min.css" integrity="sha512-z3gLpd7yknf1YoNbCzqRKc4qyor8gaKU1qmn+CShxbuBusANI9QpRohGBreCFkKxLhei6S9CQXFEbbKuqLg0DA==" crossorigin="anonymous" referrerpolicy="no-referrer" />
+    <base target = "_top">
+    <?!= include('style.css') ?>
+    <title>BMS Tool Homepage</title>
+</head>
+<body>
+<?var url = getScriptUrl();?>
+  <div class="page-header">
+      <div class="navbar flex-spacebetween-center">
+          <div class="flex-center-center" style="flex-wrap: nowrap;">
+              <div class="navbar-item margin-s padding-s">
+                  <a class="cursor-pointer" href="http://pwc.com" target="_blank"><img src="https://tpi.pwcinternal.com/content/images-pwc/pwclogo.svg" alt="PwC" style="height: 30px;"></a>
+              </div>
+              <div class="navbar-item margin-s">
+                  <a href="<?=url?>"><h2>BMS Toolbox</h2></a>
+              </div>
+          </div>
+          <div class="navbar-side">
+
+          </div>
+      </div>
+  </div>
+
+  <div class="body-box flex-column">
+    <div class="body-container flex-spacebetween-top body-pacman" style="width: 80%;">
+        <div class="body-item-container cursor-pointer" style="max-width: 50%; color:var(--text-color)">
+            <h1 class="padding-m">BMS ToolBox</h1>
+            <p class="padding-m">My tools make your BMS work less painful. Hopefully, your life will be happier, and at least you can spend more time on your loves.</p>
+            <p class="padding-m">All of my tools are under development, and of course, they may have potential bugs. Please double-check the results in final.</p>
+            <p class="padding-m">Friendly remind that this tool is free, reflecting the BMS spirit.</p>
+        </div>
+        <div class="body-item-container body-pacman">
+            <div style="color: #f6d860" class="la-pacman la-3x">
+                <div></div>
+                <div></div>
+                <div></div>
+                <div></div>
+                <div></div>
+                <div></div>
+            </div>
+        </div>
+
+    </div>
+    <div class="body-container margin-xl padding-l" style="color: var(--text-color)">
+        <h1>Useful Tools for BMS</h1>
+        <div class="body-item-container flex-left-top flex-wrap">
+            <div class="body-item-s margin-xl flex-spacebetween-center cursor-pointer tpi-box-gray" onclick="window.top.location = <?=url?> + '?page=ARChecking'">
+                <div class="flex-center-center" style="flex: 35%">
+                    <i class="fa-solid fa-calculator margin-s"></i>
+                </div>
+                <div class="padding-m" style="flex: 65%">
+                    <h3 class="padding-m">Segment Calculation</h3>
+                    <p class="padding-m">Calculate Business segment from FS / AR data. Just input number and you have percentage.</p>
+                </div>
+            </div>
+            <div class="body-item-s margin-xl flex-spacebetween-center cursor-pointer tpi-box-gray" onclick="window.top.location = <?=url?> + '?page=ComCut'">
+                <div class="flex-center-center" style="flex:35%">
+                    <i class="fa-solid fa-scissors"></i>
+                </div>
+                <div class="padding-m" style="flex:65%">
+                    <h3 class="padding-m">Cut Quali' Comment</h3>
+                    <p class="padding-m">Cut down Qualitative comment into our format. It's less painful than doing by Excel or any other tools.</p>
+                </div>
+            </div>
+            <div class="body-item-s margin-xl flex-spacebetween-center cursor-pointer tpi-box-gray" onclick="window.top.location = <?=url?> + '?page=#'">
+                <div class="flex-center-center" style="flex:35%">
+                    <i class="fa-solid fa-code"></i>
+                </div>
+                <div class="padding-m" style="flex:65%">
+                    <h3 class="padding-m">Raise Your Idea?</h3>
+                    <p class="padding-m">These tools are based on my working perspectives. If you have any sparkling idea, please feel free to contact me.</p>
+                </div>
+            </div>
+        </div>
+    </div>
+  </div>
+</body>
+<script>
+  function redirectToURL(page) {
+    var url = google.script.run.getScriptUrl();
+    google.script.run.openHTML(page)
+  }
+</script>
+</html>
