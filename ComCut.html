@@ -1,0 +1,44 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta http-equiv="X-UA-Compatible" content="IE=edge">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.2/css/all.min.css" integrity="sha512-z3gLpd7yknf1YoNbCzqRKc4qyor8gaKU1qmn+CShxbuBusANI9QpRohGBreCFkKxLhei6S9CQXFEbbKuqLg0DA==" crossorigin="anonymous" referrerpolicy="no-referrer" />
+    <link rel="stylesheet" href="style.css">
+    <title>Comment Splitting Tool</title>
+</head>
+<body>
+    <div class="page-header">
+        <div class="navbar flex-spacebetween-center">
+            <div class="flex-center-center" style="flex-wrap: nowrap;">
+                <div class="navbar-item margin-s padding-s">
+                    <a class="cursor-pointer" href="http://pwc.com" target="_blank"><img src="https://tpi.pwcinternal.com/content/images-pwc/pwclogo.svg" alt="PwC" style="height: 30px;"></a>
+                </div>
+                <div class="navbar-item margin-s">
+                    <a href="index.html"><h2>BMS Toolbox</h2></a>
+                </div>
+            </div>
+            <div class="navbar-side">
+
+            </div>
+        </div>
+    </div>
+    <div class="center-of-screen flex-center-center padding-s cursor-pointer" id="dropArea" style="position: absolute;width: 450px; height: 300px; background-color: #fff;border-radius: 20px; border: 4px dashed #ccc">
+        <input type="file" id="input" class="file-input" accept=".xlsx">
+        <i class="fa-solid fa-cloud" style="color: var(--text-color);"></i>
+        <label for="input" class="flex-center-center cursor-pointer"><h2 style="color: #fff; transform: translateY(25px);">Upload an Excel file</h2></label>
+    </div>
+    
+    <div class="flex-center-center margin-xl" id="commentDownload" style="position: relative; margin: 20px 10% 20px 10%">
+    </div>
+
+    <div class="flex-center-center flex-column" id="commentPanel">
+
+    </div>
+</body>
+<script src="app-ComCut.js"></script>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/jquery/3.6.1/jquery.min.js" integrity="sha512-aVKKRRi/Q/YV+4mjoKBsE4x3H+BkegoM/em46NNlCqNTmUYADjBbeNefNxYV7giUp0VxICtqdrbqU7iVaeZNXA==" crossorigin="anonymous" referrerpolicy="no-referrer"></script>
+<script src="https://unpkg.com/read-excel-file@5.x/bundle/read-excel-file.min.js"></script>
+
+</html>
