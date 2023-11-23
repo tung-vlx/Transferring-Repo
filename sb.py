@@ -1,3 +1,8 @@
+#statistics
+import time
+startTime = time.time()
+import datetime
+
 import openpyxl
 from openpyxl.utils import get_column_letter
 from openpyxl.styles import PatternFill, Border, Side, Font, Alignment, Color
@@ -108,10 +113,11 @@ def format_and_merge(start_row, end_row, start_col, end_col, value, font_color, 
     cell.fill = PatternFill("solid", fgColor=fill_color)
     cell.border = border_style
 # Define formatting parameters
+year = str(int(datetime.date.today().strftime("%Y")) - 1)
 formats = [
     (7, 7, 7, 8, "Stockbiz", 'FFFFFF', 'BF8F00'),
     (7, 7, 9, 11, "Company's website", 'FFFFFF', 'FF0000'),
-    (7, 7, 12, 14, "Annual Report / Unconsolidated Financial Statement 31/12/2021", '000000', 'FFC000'),
+    (7, 7, 12, 14, f"Annual Report / Unconsolidated Financial Statement 31/12/{year}", '000000', 'FFC000'),
     (7, 7, 15, 18, "Rejection reason", '000000', '92D050')
 ]
 for format_params in formats:
@@ -126,7 +132,7 @@ def format(value, columnWidth, columnIndex):
     cell.border = border_style
     columnLetter = get_column_letter(columnIndex)
     ws_input.column_dimensions[columnLetter].width = columnWidth
-formats = [("No.", 5.86), ("Vietnamese Name", 42), ("English Name", 42), ("Listed name", 8.71), ("Listed in", 8.86), ("Business Description", 46.43), ("Biggest shareholder", 37.43), ("Website", 26.57), ("Website obtained from web search", 13), ("Website Description", 44.86), ("Business description\nFY2021", 33.71), ("Business segment\nFY2021", 33.71), ("Biggest shareholder\nFY2021", 33.71), ("Non-independence (25%)", 12), ("Different functions", 12), ("Different products", 12), ("Others", 12), ("Accept/Reject", 12), ("Comments", 36), ("Notes", 22.71)]
+formats = [("No.", 5.86), ("Vietnamese Name", 42), ("English Name", 42), ("Listed name", 8.71), ("Listed in", 8.86), ("Business Description", 46.43), ("Biggest shareholder", 37.43), ("Website", 26.57), ("Website obtained from web search", 13), ("Website Description", 44.86), (f"Business description\nFY{year}", 33.71), (f"Business segment\nFY{year}", 33.71), (f"Biggest shareholder\nFY{year}", 33.71), ("Non-independence (25%)", 12), ("Different functions", 12), ("Different products", 12), ("Others", 12), ("Accept/Reject", 12), ("Comments", 36), ("Notes", 22.71)]
 ws_input.row_dimensions[8].height = 59.25
 i=2
 for format_params in formats:
@@ -141,7 +147,6 @@ chromeOpts.add_argument("window-size=960,1080")
 chrome = webdriver.Edge(options = chromeOpts)
 chrome2 = webdriver.Edge(options = chromeOpts)
 from selenium.webdriver.common.by import By
-import time
 print(' -------------------')
 print('Start filling Local Search')
 ICBDict = {
@@ -214,7 +219,14 @@ while ws_input.cell(row=ICBIndex, column=1).value != None and ws_input.cell(row=
     whileBln = True
     while whileBln==True:
         # Extracting data...
-        element_table = chrome.find_element(By.CLASS_NAME, 'dataTable')
+        try:
+            element_table = chrome.find_element(By.CLASS_NAME, 'dataTable')
+        except:
+            whileBln = False
+            elements_row = []
+            break
+            
+
         element_table = element_table.find_element(By.TAG_NAME, 'tbody')
         elements_row = element_table.find_elements(By.TAG_NAME, 'tr')
 
@@ -284,3 +296,19 @@ chrome2.quit()
 print(' -------------------')    
 print("Save file")
 wb.save('Local Search & Screenshot.xlsx')
+print(' -------------------')    
+print("Delete temp folder")
+shutil.rmtree(path + "/Excel/resource")
+print(' -------------------')    
+print("End")
+print(' -------------------')    
+print("Factos:")
+
+processing_time = int(time.time() - startTime)
+if processing_time < 60:
+    print("# Running Time: " + str(processing_time) + " s")
+elif processing_time < 3599:
+    print("# Running Time: " + str(processing_time//60) + "m" + str(processing_time%60) + "s")    
+
+print("# Done: " + str(rowIndex-8-ICBIndex) + " companies")
+print("# Made by yoyoitsme")
