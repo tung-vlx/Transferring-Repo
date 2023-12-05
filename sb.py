@@ -2,7 +2,7 @@
 import time
 startTime = time.time()
 import datetime
-
+from PIL import Image
 import openpyxl
 from openpyxl.utils import get_column_letter
 from openpyxl.styles import PatternFill, Border, Side, Font, Alignment, Color
@@ -13,15 +13,28 @@ border_style = Border(left=Side(border_style="thin"),
                       top=Side(border_style="thin"),
                       bottom=Side(border_style="thin"))
 
-def screenshot(stockCode, ws_input, rowIndex):
+def cropImage(imageName, elementStart_x, elementStart_y, elementEnd_x, elementEnd_y):
+    img = Image.open(imageName)
+    img = img.crop((elementStart_x, elementStart_y, elementEnd_x, elementEnd_y))
+    img.save(imageName)
+
+def insertImage_to_Excel(ws,imageName, cellIndex):
+    img = openpyxl.drawing.image.Image(imageName)
+    img.anchor = cellIndex
+    ws.add_image(img)
+
+def insertImage(ws, stockCode,rowIndex):
+    imageName = 'Excel/resource/' + stockCode + '-1.png'
+    cellIndex = 'A' + str(rowIndex)
+    insertImage_to_Excel(ws, imageName, cellIndex)
+
+    imageName = 'Excel/resource/' + stockCode + '-2.png'
+    cellIndex = 'J' + str(rowIndex)
+    insertImage_to_Excel(ws, imageName, cellIndex)
+
+def StockCodeScreenshot(stockCode, ws_input, rowIndex):
     chrome2.get("http://en.stockbiz.vn/Stocks/" + stockCode + "/Snapshot.aspx")
-
-    from PIL import Image
-    def cropImage(imageName, elementStart_x, elementStart_y, elementEnd_x, elementEnd_y):
-        img = Image.open(imageName)
-        img = img.crop((elementStart_x, elementStart_y, elementEnd_x, elementEnd_y))
-        img.save(imageName)
-
+    
     from selenium.webdriver.common.by import By
     elementStart = chrome2.find_element(By.XPATH, '//*[@id="ctl00_PlaceHolderContentArea_TopZone"]/tbody/tr/td/table/tbody/tr[1]/td/table/tbody/tr/td/div')
     elementStart_x = elementStart.location['x']
@@ -34,8 +47,8 @@ def screenshot(stockCode, ws_input, rowIndex):
     cropImage(imageName, elementStart_x, elementStart_y, elementEnd_x, elementEnd_y)
 
     element_EnglishName = chrome2.find_element(By.CLASS_NAME, 'CompanyTitle').text
-    # EnglishName = element_EnglishName[0:element_EnglishName.rindex('(')-1]
-    # ws_input.cell(row = rowIndex, column = 4).value = EnglishName
+    EnglishName = element_EnglishName[0:element_EnglishName.rindex('(')-1]
+    ws_input.cell(row = rowIndex, column = 4).value = EnglishName
     Exchange = element_EnglishName[element_EnglishName.rindex(':')+2:element_EnglishName.rindex(')')]
     ws_input.cell(row = rowIndex, column = 6).value = Exchange
     element_BusinessDesciption = chrome2.find_element(By.XPATH, '//*[@id="ctl00_PlaceHolderContentArea_CenterZone"]/tbody/tr/td/table/tbody/tr[2]/td/table/tbody/tr/td/div[1]').text
@@ -51,6 +64,7 @@ def screenshot(stockCode, ws_input, rowIndex):
     ws_input.cell(row = rowIndex, column = 9).value = element_Website
 
     chrome2.get("http://en.stockbiz.vn/Stocks/" + stockCode + "/MajorHolders.aspx")
+    # chrome2.execute_script("document.body.style.zoom='75%'")
     elementEnd = chrome2.find_element(By.XPATH, '//*[@id="ctl00_PlaceHolderContentArea_CenterZone"]/tbody/tr/td/table/tbody/tr[2]/td/table/tbody/tr/td/div[2]/table/tbody/tr[4]')
     elementEnd_x = elementEnd.location['x'] + elementEnd.size['width'] + 10
     elementEnd_y = elementEnd.location['y'] + elementEnd.size['height']
@@ -61,15 +75,7 @@ def screenshot(stockCode, ws_input, rowIndex):
     ws_input.cell(row = rowIndex, column = 8).value = element_Shareholder1 + " - " + element_Shareholder2
     chrome2.save_screenshot(imageName)
     cropImage(imageName, elementStart_x, elementStart_y, elementEnd_x, elementEnd_y)
-
-def insertImage(ws, stockCode,rowIndex):
-    img = openpyxl.drawing.image.Image('Excel/resource/' + stockCode + '-1.png')
-    img.anchor = 'A' + str(rowIndex)
-    ws.add_image(img)
-    img = openpyxl.drawing.image.Image('Excel/resource/' + stockCode + '-2.png')
-    img.anchor = 'J' + str(rowIndex)
-    ws.add_image(img)
-
+    
 # ------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------
 
 print(' -------------------')
@@ -93,7 +99,7 @@ ws_input = wb["Sheet1"]
 ws_input.sheet_view.showGridLines = False
 
 print('Create client background information')
-#Client's and BMS's information
+# Client's and BMS's information
 GeneralInfo = ["Client name", "Province, Vietnam", "Local BMS for manufacture/distribution of"]
 for rowIndex, info in enumerate(GeneralInfo, start=3):
     cell = ws_input.cell(row=rowIndex, column = 2)
@@ -139,6 +145,18 @@ for format_params in formats:
     format(*format_params, i)
     i += 1
 
+# Create Summary Sheet
+print(' -------------------')
+print('Create sheet Amount of Total Companies')
+wb.create_sheet('Amount of Total Companies')
+ws_summary = wb['Amount of Total Companies']
+ws_summary.sheet_view.showGridLines = False
+for rowIndex, info in enumerate(GeneralInfo, start=3):
+    cell = ws_summary.cell(row=rowIndex, column = 1)
+    cell.value = info
+    cell.font = Font(name='Georgia', sz=11, b=True)
+    cell.alignment = Alignment(horizontal='left', vertical='center')
+
 
 import selenium
 from selenium import webdriver
@@ -161,8 +179,11 @@ ICBDict = {
     "8000":"Financials","8300":"Banks","8350":"Banks","8355":"Banks","8500":"Insurance","8530":"Nonlife Insurance","8532":"Full Line Insurance","8534":"Insurance Brokers","8536":"Property & Casualty Insurance","8538":"Reinsurance","8570":"Life Insurance","8575":"Life Insurance","8600":"Real Estate","8630":"Real Estate Investment & Services","8633":"Real Estate Holding & Development","8637":"Real Estate Services","8670":"Real Estate Investment Trusts","8671":"Industrial & Office REITs","8672":"Retail REITs","8673":"Residential REITs","8674":"Diversified REITs","8675":"Specialty REITs","8676":"Mortgage REITs","8677":"Hotel & Lodging REITs","8700":"Financial Services","8770":"Financial Services","8771":"Asset Managers","8773":"Consumer Finance","8775":"Specialty Finance","8777":"Investment Services","8779":"Mortgage Finance","8900":"Equity/Nonequity Investments","8980":"Equity Investment Instruments","8985":"Equity Investment Instruments","8990":"Nonequity Investment Instruments","8995":"Nonequity Investment Instruments",
     "9000":"Technology","9500":"Technology","9530":"Software & Computer Services","9533":"Computer Services","9535":"Internet","9537":"Software","9570":"Technology Hardware & Equipment","9572":"Computer Hardware","9574":"Electronic Office Equipment","9576":"Semiconductors","9578":"Telecommunications Equipment"
 }
-rowIndex = 9    #Index in sheet Input
-rowIndex2 = 1   #Index in sheet ICB
+rowIndex = 9    # Index in sheet Input
+rowIndex2 = 1   # Index in sheet ICB
+rowIndex3 = 7   # Index in sheet Amount of Total Companies
+columnIndex3 = 1
+
 ICBIndex = 1 
 while ws_input.cell(row=ICBIndex, column=1).value != None and ws_input.cell(row=ICBIndex, column=1).value != '':
     cell_value = ws_input.cell(row=ICBIndex, column=1).value
@@ -180,6 +201,7 @@ while ws_input.cell(row=ICBIndex, column=1).value != None and ws_input.cell(row=
     print('ICB is valid, and is '+ICBCode)   
     print(' -------------------')
     print(ICBFull)
+
 
     wb.create_sheet("Code "+str(ICBCode))
     ws_ICB = wb["Code "+ str(ICBCode)]
@@ -202,6 +224,15 @@ while ws_input.cell(row=ICBIndex, column=1).value != None and ws_input.cell(row=
         cell2.alignment = Alignment(vertical='bottom', wrap_text=False)
         cell2.fill = PatternFill('solid', fgColor='F8CBAD')
         cell2.border = border_style
+    
+    # Formatting | Sheet Summary
+    ws_summary.cell(row=rowIndex3, column=1).value = ICBFull
+    ws_summary.row_dimensions[rowIndex3].height = 20.25
+    ws_summary.cell(row=rowIndex3, column=1).font = Font(name='Georgia', sz=11, b=True , color='000000')
+    ws_summary.cell(row=rowIndex3, column=1).alignment = Alignment(vertical='bottom', wrap_text=False)
+    ws_summary.cell(row=rowIndex3, column=1).fill = PatternFill('solid', fgColor='F8CBAD')
+    rowIndex3 += 1
+       
     # Navigate ICB code...
     chrome.get("https://www.stockbiz.vn/IndustryOverview.aspx?Code=" + ICBCode)
     time.sleep(2)
@@ -210,13 +241,12 @@ while ws_input.cell(row=ICBIndex, column=1).value != None and ws_input.cell(row=
     except:
         print()
 
-    element_scroll = chrome.find_element(By.CLASS_NAME, 'mainheader')
-    scroll = element_scroll.location['y']
-    chrome.execute_script("window.scrollTo(0,scroll+600)")
+    chrome.execute_script("window.scrollTo(0,670)")     # Scroll down to Data Table
     tempRow = rowIndex
     print(' -------------------')    
     print("Detecting Data Table")
     whileBln = True
+   
     while whileBln==True:
         # Extracting data...
         try:
@@ -225,13 +255,27 @@ while ws_input.cell(row=ICBIndex, column=1).value != None and ws_input.cell(row=
             whileBln = False
             elements_row = []
             break
-            
 
         element_table = element_table.find_element(By.TAG_NAME, 'tbody')
         elements_row = element_table.find_elements(By.TAG_NAME, 'tr')
 
         if len(elements_row) == 1:
             break
+        
+        print(' -------------------')    
+        print('Screenshot Data Table')
+        elementStart = chrome.find_element(By.XPATH, '//*[@id="ctl00_PlaceHolderContentArea_LeftZone"]/tbody/tr/td/table/tbody/tr[2]/td/table/tbody/tr/td/div[2]')
+        elementStart_x = elementStart.location['x'] - 12
+        elementStart_y = elementStart.location['y'] - 670
+        elementEnd = chrome.find_element(By.XPATH, '//*[@id="ctl00_webPartManager_wp572523149_wp829393896_callbackTopSymbols"]/div[2]')
+        elementEnd_x = elementEnd.location['x'] + elementEnd.size['width'] + 10
+        elementEnd_y = elementEnd.location['y'] + elementEnd.size['height'] - 670 + 10
+        imageName = "Excel/resource/" + ICBCode + "-" + str(columnIndex3//10 + 1) + ".png"
+        chrome.save_screenshot(imageName)
+        cropImage(imageName, elementStart_x, elementStart_y, elementEnd_x, elementEnd_y)
+        cellIndex = get_column_letter(columnIndex3) + str(rowIndex3) 
+        insertImage_to_Excel(ws_summary,imageName, cellIndex)        
+        
         print(' -------------------')    
         print("Listing companies")
         # Writing to Excel | Sheet Inout ...
@@ -242,6 +286,7 @@ while ws_input.cell(row=ICBIndex, column=1).value != None and ws_input.cell(row=
             ws_input.cell(row=rowIndex, column=2).value = str(rowIndex - ICBIndex - 9 + 1)
             ws_input.cell(row=rowIndex, column=5).value = elements_td[0].text[0:3]
             ws_input.cell(row=rowIndex, column=3).value = elements_td[1].text
+            ws_input.cell(row=rowIndex, column=15).value = '=if(or('+ get_column_letter(14) + str(rowIndex) + '="",'+ get_column_letter(14) + str(rowIndex) + '="-"),if(value(right(' + get_column_letter(8) + str(rowIndex) + ',6))>=0.25,"X",""),if(value(right('+ get_column_letter(14) + str(rowIndex) +',6))>=0.25,"X",""))'
             ws_input.cell(row=rowIndex, column=19).value = '=if('+ get_column_letter(20) + str(rowIndex) + '="","Accept","Reject")'
             print("# Proccessing "+elements_td[0].text[0:3]+" ...")
             # Formatting | Sheet Input...
@@ -262,7 +307,7 @@ while ws_input.cell(row=ICBIndex, column=1).value != None and ws_input.cell(row=
             for cell in ws_ICB[rowIndex2]:
                 cell.font = Font(name='Georgia', b=True, sz=11 , color='000000')
                 cell.fill = PatternFill('solid', fgColor='FFFF00')
-            screenshot(elements_td[0].text[0:3], ws_input, rowIndex)
+            StockCodeScreenshot(elements_td[0].text[0:3], ws_input, rowIndex)
             insertImage(ws_ICB, elements_td[0].text[0:3], rowIndex2+1)
 
         # Checking for next page...
@@ -273,14 +318,20 @@ while ws_input.cell(row=ICBIndex, column=1).value != None and ws_input.cell(row=
             continue
         elif element_next[len(element_next)-1].text[0:1] == "T":
             print("Move to next page")
+            columnIndex3 += 11
             element_next[len(element_next)-1].click()
             whileBln = True
             time.sleep(1)
         else:
             whileBln = False
             continue
-
-    #key number of companies under ICB code
+    
+    columnIndex3 = 1
+    imageName = "Excel/resource/" + ICBCode + "-1.png"
+    img = Image.open(imageName)
+    img_height = img.height
+    rowIndex3 += img_height // 20 + 2
+    # key number of companies under ICB code
     if len(elements_row) <= 2:
             ws_input.cell(row=tempRow, column=3).value = str(rowIndex - tempRow) + " company"
     else:
@@ -298,7 +349,11 @@ print("Save file")
 wb.save('Local Search & Screenshot.xlsx')
 print(' -------------------')    
 print("Delete temp folder")
-shutil.rmtree(path + "/Excel/resource")
+try:
+    shutil.rmtree(path + "/Excel/resource")
+except:
+    print()
+
 print(' -------------------')    
 print("End")
 print(' -------------------')    
