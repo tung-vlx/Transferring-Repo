@@ -93,7 +93,6 @@ except:
     print("Delete existing temp folder")
     print("Create new temp folder")
 
-path = r'C:\Users\vtung010\Downloads\Stockbiz Scraping\Python\Python'
 wb = openpyxl.load_workbook("Excel/input.xlsx")
 ws_input = wb["Sheet1"]
 ws_input.sheet_view.showGridLines = False
@@ -367,3 +366,5 @@ elif processing_time < 3599:
 
 print("# Done: " + str(rowIndex-8-ICBIndex) + " companies")
 print("# Made by yoyoitsme")
+
+
