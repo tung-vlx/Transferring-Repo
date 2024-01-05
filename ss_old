@@ -1,0 +1,149 @@
+import os
+path = os.getcwd()
+
+import time
+startTime = time.time()
+from PIL import Image
+
+import selenium
+from selenium import webdriver
+chromeOpts = webdriver.EdgeOptions()
+chromeOpts.add_argument("window-size=960,1080")
+chrome = webdriver.Edge(options = chromeOpts)
+from selenium.webdriver.common.by import By
+
+def crop_image(image_name, elementStart_x, elementStart_y, elementEnd_x, elementEnd_y):
+    img = Image.open(image_name)
+    img = img.crop((elementStart_x, elementStart_y, elementEnd_x, elementEnd_y))
+    img.save(image_name)
+
+def insert_image_to_Excel(ws,image_name, cell_index):
+    img = openpyxl.drawing.image.Image(image_name)
+    img.anchor = cell_index
+    ws.add_image(img)
+
+def insert_image(ws, stock_code, row_index):
+    image_name = 'Excel/resource/' + stock_code + '-1.png'
+    cell_index = 'A' + str(row_index)
+    insert_image_to_Excel(ws, image_name, cell_index)
+
+    image_name = 'Excel/resource/' + stock_code + '-2.png'
+    cell_index = 'J' + str(row_index)
+    insert_image_to_Excel(ws, image_name, cell_index)
+
+def stock_code_screenshot(stock_code, ws, row_index, ws_main, row_index_main):
+    chrome.get("http://en.stockbiz.vn/Stocks/" + stock_code + "/Snapshot.aspx")
+    elementStart = chrome.find_element(By.XPATH, '//*[@id="ctl00_PlaceHolderContentArea_TopZone"]/tbody/tr/td/table/tbody/tr[1]/td/table/tbody/tr/td/div')
+    elementStart_x = elementStart.location['x']
+    elementStart_y = elementStart.location['y']
+    elementEnd = chrome.find_element(By.XPATH, '//*[@id="ctl00_webPartManager_wp839831864_wp747632477_cbOfficers"]/div')
+    elementEnd_x = elementEnd.location['x'] + elementEnd.size['width'] + 10
+    elementEnd_y = elementEnd.location['y'] + elementEnd.size['height']
+    image_name = "Excel/resource/"+ stock_code + "-1.png"
+    chrome.save_screenshot(image_name)
+    crop_image(image_name, elementStart_x, elementStart_y, elementEnd_x, elementEnd_y)
+
+    element_BusinessDesciption = chrome.find_element(By.XPATH, '//*[@id="ctl00_PlaceHolderContentArea_CenterZone"]/tbody/tr/td/table/tbody/tr[2]/td/table/tbody/tr/td/div[1]').text
+    if element_BusinessDesciption == '':
+        element_BusinessDesciption = '-'
+    ws_main.cell(row = row_index_main, column = 6).value = element_BusinessDesciption
+
+    chrome.get("http://en.stockbiz.vn/Stocks/" + stock_code + "/MajorHolders.aspx")
+    elementEnd = chrome.find_element(By.XPATH, '//*[@id="ctl00_PlaceHolderContentArea_CenterZone"]/tbody/tr/td/table/tbody/tr[2]/td/table/tbody/tr/td/div[2]/table/tbody/tr[4]')
+    elementEnd_x = elementEnd.location['x'] + elementEnd.size['width'] + 10
+    elementEnd_y = elementEnd.location['y'] + elementEnd.size['height']
+    image_name = "Excel/resource/"+ stock_code + "-2.png"
+    chrome.save_screenshot(image_name)
+    crop_image(image_name, elementStart_x, elementStart_y, elementEnd_x, elementEnd_y)
+
+    element_Shareholder1 = chrome.find_element(By.XPATH, '//*[@id="ctl00_PlaceHolderContentArea_CenterZone"]/tbody/tr/td/table/tbody/tr[2]/td/table/tbody/tr/td/div[2]/table/tbody/tr[2]/td[1]').text
+    element_Shareholder2 = chrome.find_element(By.XPATH, '//*[@id="ctl00_PlaceHolderContentArea_CenterZone"]/tbody/tr/td/table/tbody/tr[2]/td/table/tbody/tr/td/div[2]/table/tbody/tr[2]/td[4]').text
+    ws_main.cell(row = row_index_main, column = 7).value = element_Shareholder1 + " - " + element_Shareholder2
+
+    insert_image(ws, stock_code, row_index)
+
+
+import os
+import shutil
+try:
+    os.mkdir(path + "/Excel/resource")
+    print("--------------------")
+    print("Create temp folder")
+except:
+    shutil.rmtree(path + "/Excel/resource")
+    os.mkdir(path + "/Excel/resource")
+    print("--------------------")
+    print("Delete existing temp folder")
+    print("Create new temp folder")
+
+import openpyxl
+from openpyxl.utils import get_column_letter
+from openpyxl.styles import PatternFill, Border, Side, Font, Alignment, Color
+wb = openpyxl.load_workbook(path + '/Excel/input.xlsx')
+ws_main = wb.worksheets[0]
+
+start_row = 0
+print("--------------------")
+print("Finding Local Search Table")
+for row in range(1, ws_main.max_row + 1):
+    cell_value = ws_main.cell(row=row, column=2).value
+    if cell_value and "vietnamese" in str(cell_value).lower():
+        start_row = row
+        break
+start_row += 1
+print("--------------------")
+print("Scanning Local Search Table")
+for row in range(start_row, ws_main.max_row + 1):
+    if ws_main.cell(row=row, column=4).value == None:
+        print("--------------------")
+        print("Detecting ", str(ws_main.cell(row=row, column=1).value))
+        sheet_name = 'Code ' + str(ws_main.cell(row=row, column=1).value[0:4])
+        print("--------------------")
+        print("Create sheet ", sheet_name)
+        wb.create_sheet(sheet_name)
+        first_line_index = row + 1
+        ws_ICB = wb[sheet_name]
+        continue
+    if row - first_line_index == 0:
+        ws_ICB_row_index = 1
+    else:
+        ws_ICB_row_index = (row - first_line_index) * 50
+    print("++++++++++")
+    print("#Processing ", ws_main.cell(row=row, column=4).value)
+    ws_ICB.cell(row=ws_ICB_row_index, column=1).value = ws_main.cell(row=row, column=4).value
+    ws_ICB.cell(row=ws_ICB_row_index, column=1).font = Font(name='Georgia', b=True, sz=11 , color='000000')
+    ws_ICB.cell(row=ws_ICB_row_index, column=1).fill = PatternFill('solid', fgColor='FFFF00')
+    print("#Screenshot ", ws_main.cell(row=row, column=4).value)
+    print("++++++++++")
+    stock_code_screenshot(ws_main.cell(row=row, column=4).value, ws_ICB, ws_ICB_row_index+1, ws_main, row)
+print("--------------------")
+print("Closing Browser")
+chrome.quit()
+print("--------------------")
+print("Saving Excel File")
+try:
+    wb.save('Local Search & Screenshot.xlsx')
+except :
+    while_bln = True
+    i=1
+    while while_bln == True:
+        try:
+            wb.save('Local Search & Screenshot-' + str(i) + '.xlsx')
+            break
+        except:
+            i += 1
+print("--------------------")    
+print("End")
+print("--------------------")    
+print("Factos:")
+processing_time = int(time.time() - startTime)
+if processing_time < 60:
+    print("# Running Time: " + str(processing_time) + " s")
+elif processing_time < 3599:
+    print("# Running Time: " + str(processing_time//60) + "m" + str(processing_time%60) + "s")
+else:
+    print("# Running Time: " + str(processing_time//3600) + "h" + str(processing_time//3600//60) + "m" + str(processing_time//3600%60) + "s")
+print("# Made by yoyoitsme")
+print("--------------------")    
+print("Press any key to continue...")
+input()
