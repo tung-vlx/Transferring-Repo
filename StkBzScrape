@@ -1,0 +1,868 @@
+Public Function StockBizShareholder_old(stockcode)
+    Dim ie As New InternetExplorer
+    Dim doc As New HTMLDocument
+    Dim pageData As Object
+    Dim shData As String
+    
+    On Error GoTo ErrorHandler
+    
+    ie.Visible = True
+    ie.navigate "http://en.stockbiz.vn/Stocks/" + stockcode + "/MajorHolders.aspx"
+    Do
+        DoEvents
+    Loop Until ie.readyState = READYSTATE_COMPLETE
+    
+    Set doc = ie.document
+    Set pageData = doc.querySelectorAll("table.ctl00_PlaceHolderContentArea_CenterZone_1 td.NoPadding div table tr.rowcolor2")(0)
+    
+    StockBizShareholder_old = Left(pageData.Children.Item(0).innerText, Len(pageData.Children.Item(0).innerText) - 1) + " - " + Left(pageData.Children.Item(3).innerText, Len(pageData.Children.Item(3).innerText) - 1)
+    
+    ie.Quit
+    
+ErrorHandler:
+    ie.Quit
+    Exit Function
+    
+End Function
+Function StockBizShareholder(stock_code)
+    Dim objRequest As Object
+    Dim strURL As String
+    Dim token_1 As String
+    Dim token_2 As String
+    Dim json As Object
+    Dim blnAsync As Boolean
+    Dim strResponse As String
+    
+    
+    token_1 = "Bearer eyJ0eXAiOiJKV1QiLCJhbGciOiJSUzI1NiIsIng1dCI6IkdYdExONzViZlZQakdvNERWdjV4QkRITHpnSSIsImtpZCI6IkdYdExONzViZlZQakdvNERWdjV4QkRITHpnSSJ9.eyJpc3MiOiJodHRwczovL2FjY291bnRzLmZpcmVhbnQudm"
+    token_1 = token_1 & "4iLCJhdWQiOiJodHRwczovL2FjY291bnRzLmZpcmVhbnQudm4vcmVzb3VyY2VzIiwiZXhwIjoxOTcwNDY4OTYwLCJuYmYiOjE2NzA0Njg5NjAsImNsaWVudF9pZCI6ImZpcmVhbnQudHJhZGVzdGF0aW9uIiwic2NvcGUiOlsib3BlbmlkIiwicHJvZmlsZSIsInJvbGVzIiwiZW1haWwiLCJhY2NvdW50cy1yZWFkIiwiYWNjb3VudHMtd3JpdGUiLCJvcmRlcnMtcmVhZCIsIm9yZGVycy13cml0ZSIsImNvbXBhbmllcy1yZWFkIiwiaW5kaXZpZHVhbHMtcmVhZCIsImZpbmFuY2UtcmVhZCIsInBvc3RzLXdyaXRlIiwicG9zdHMtcmVhZCIsInN5bWJvbHMtcmVhZCIsInVzZXItZGF0YS1yZWFkIiwidXNlci1kYXRhLXdyaXRlIiwidXNlcnMtcmVhZCIsInNlYXJjaCIsImFjYWRlbXktcmVhZCIsImFjYWRlbXktd3JpdGUiLCJibG9nLXJlYWQiLCJpbnZlc3RvcGVkaWEtcmVhZCJdLCJzdWIiOiJjY2Q0OTZkZi0xZGJiLTRlOGQtODIxNC03NmVhMzJkMDI0YzkiLCJhdXRoX3RpbWUiOjE2NzA0Njg5NjAsImlkcCI6Imlkc3J2IiwibmFtZSI6ImJpdmFiaW4xMDBAZ21haWwuY29tIiwic2VjdXJpdHlfc3RhbXAiOiJlZTJkZWY5NC03MGExLTQxODktYjlmZS01N2QyMmM3Mjk4NTkiLCJqdGkiOiJlYzEwNzUwNzZjMGEzNjg"
+    
+    token_2 = "wZDZjY2ExMDc2MWUyOWMyNCIsImFtciI6WyJwYXNzd29yZCJdfQ.VQYlpwEn8Qx6f9CiUVX7d6YP7x6QpfBrOs3td1bjicS1mpIneOO95yxRjDmYFdSFHNG1SpJwof0cvu6bfiuCcl08HPaQscOqv0497y-Z5L8qk9T4EDJfRtMauBTSiR8k1sv21W6-7qZvjTrgGdDWhGojYNadZs0hXnmV0wv-Kx9_bEkUhzt9O78QI9Y1Vb6pjBKhKMk0jQqlLmI_CqLlZ0JJk8Hgr9vcUX91JL5oIieyKcRfZ2gbcSfLpAxSxeEpkU4HWJ-C5B1rqokDjfAJ9fTHM_yRY6zmCz6PljEf0Xoc865br3lRWKSXhjSu127hIQlDmH_rVoZU9JdnekHsLA"
+    
+    Set objRequest = CreateObject("MSXML2.XMLHTTP")
+    strURL = "https://api.fireant.vn/symbols/" & stock_code & "/holders"
+    blnAsync = True
+    
+    With objRequest
+        .Open "GET", strURL, blnAsync
+        .SetRequestHeader "Content-Type", "application/json"
+        .SetRequestHeader "Authorization", token_1 & token_2
+        .Send
+        
+        While objRequest.readyState <> 4
+            DoEvents
+        Wend
+        
+        strResponse = .ResponseText
+        
+    End With
+    
+    Set json = JsonConverter.ParseJson(strResponse)
+    
+    Dim shareholder_name As String
+    Dim shareholder_ownership As Double
+    Dim shareholder_ownership_string As String
+    
+    shareholder_name = json.Item(1)("name")
+    shareholder_ownership = json.Item(1)("ownership")
+    shareholder_ownership_string = Format(shareholder_ownership * 100, "0.00") & "%"
+    StockBizShareholder = shareholder_name & " - " & shareholder_ownership_string
+    
+End Function
+Public Function StockBizVietnameseName(stock_code)
+    Dim objRequest As Object
+    Dim strURL As String
+    Dim token_1 As String
+    Dim token_2 As String
+    Dim json As Object
+    Dim blnAsync As Boolean
+    Dim strResponse As String
+    
+    token_1 = "Bearer eyJ0eXAiOiJKV1QiLCJhbGciOiJSUzI1NiIsIng1dCI6IkdYdExONzViZlZQakdvNERWdjV4QkRITHpnSSIsImtpZCI6IkdYdExONzViZlZQakdvNERWdjV4QkRITHpnSSJ9.eyJpc3MiOiJodHRwczovL2FjY291bnRzLmZpcmVhbnQudm"
+    token_1 = token_1 & "4iLCJhdWQiOiJodHRwczovL2FjY291bnRzLmZpcmVhbnQudm4vcmVzb3VyY2VzIiwiZXhwIjoxOTcwNDY4OTYwLCJuYmYiOjE2NzA0Njg5NjAsImNsaWVudF9pZCI6ImZpcmVhbnQudHJhZGVzdGF0aW9uIiwic2NvcGUiOlsib3BlbmlkIiwicHJvZmlsZSIsInJvbGVzIiwiZW1haWwiLCJhY2NvdW50cy1yZWFkIiwiYWNjb3VudHMtd3JpdGUiLCJvcmRlcnMtcmVhZCIsIm9yZGVycy13cml0ZSIsImNvbXBhbmllcy1yZWFkIiwiaW5kaXZpZHVhbHMtcmVhZCIsImZpbmFuY2UtcmVhZCIsInBvc3RzLXdyaXRlIiwicG9zdHMtcmVhZCIsInN5bWJvbHMtcmVhZCIsInVzZXItZGF0YS1yZWFkIiwidXNlci1kYXRhLXdyaXRlIiwidXNlcnMtcmVhZCIsInNlYXJjaCIsImFjYWRlbXktcmVhZCIsImFjYWRlbXktd3JpdGUiLCJibG9nLXJlYWQiLCJpbnZlc3RvcGVkaWEtcmVhZCJdLCJzdWIiOiJjY2Q0OTZkZi0xZGJiLTRlOGQtODIxNC03NmVhMzJkMDI0YzkiLCJhdXRoX3RpbWUiOjE2NzA0Njg5NjAsImlkcCI6Imlkc3J2IiwibmFtZSI6ImJpdmFiaW4xMDBAZ21haWwuY29tIiwic2VjdXJpdHlfc3RhbXAiOiJlZTJkZWY5NC03MGExLTQxODktYjlmZS01N2QyMmM3Mjk4NTkiLCJqdGkiOiJlYzEwNzUwNzZjMGEzNjg"
+    
+    token_2 = "wZDZjY2ExMDc2MWUyOWMyNCIsImFtciI6WyJwYXNzd29yZCJdfQ.VQYlpwEn8Qx6f9CiUVX7d6YP7x6QpfBrOs3td1bjicS1mpIneOO95yxRjDmYFdSFHNG1SpJwof0cvu6bfiuCcl08HPaQscOqv0497y-Z5L8qk9T4EDJfRtMauBTSiR8k1sv21W6-7qZvjTrgGdDWhGojYNadZs0hXnmV0wv-Kx9_bEkUhzt9O78QI9Y1Vb6pjBKhKMk0jQqlLmI_CqLlZ0JJk8Hgr9vcUX91JL5oIieyKcRfZ2gbcSfLpAxSxeEpkU4HWJ-C5B1rqokDjfAJ9fTHM_yRY6zmCz6PljEf0Xoc865br3lRWKSXhjSu127hIQlDmH_rVoZU9JdnekHsLA"
+    
+    Set objRequest = CreateObject("MSXML2.XMLHTTP")
+    strURL = "https://api.fireant.vn/symbols/" & stock_code & "/profile"
+    blnAsync = True
+    
+    With objRequest
+        .Open "GET", strURL, blnAsync
+        .SetRequestHeader "Content-Type", "application/json"
+        .SetRequestHeader "Authorization", token_1 & token_2
+        .Send
+        
+        While objRequest.readyState <> 4
+            DoEvents
+        Wend
+        
+        strResponse = .ResponseText
+        
+    End With
+    
+    Set json = JsonConverter.ParseJson(strResponse)
+    StockBizVietnameseName = json("companyName")
+End Function
+Function StockBizEnglishName(stock_code)
+    Dim objRequest As Object
+    Dim strURL As String
+    Dim token_1 As String
+    Dim token_2 As String
+    Dim json As Object
+    Dim blnAsync As Boolean
+    Dim strResponse As String
+    Dim EnglishName As String
+    
+    On Error GoTo ErrorHandler
+    
+    token_1 = "Bearer eyJ0eXAiOiJKV1QiLCJhbGciOiJSUzI1NiIsIng1dCI6IkdYdExONzViZlZQakdvNERWdjV4QkRITHpnSSIsImtpZCI6IkdYdExONzViZlZQakdvNERWdjV4QkRITHpnSSJ9.eyJpc3MiOiJodHRwczovL2FjY291bnRzLmZpcmVhbnQudm"
+    token_1 = token_1 & "4iLCJhdWQiOiJodHRwczovL2FjY291bnRzLmZpcmVhbnQudm4vcmVzb3VyY2VzIiwiZXhwIjoxOTcwNDY4OTYwLCJuYmYiOjE2NzA0Njg5NjAsImNsaWVudF9pZCI6ImZpcmVhbnQudHJhZGVzdGF0aW9uIiwic2NvcGUiOlsib3BlbmlkIiwicHJvZmlsZSIsInJvbGVzIiwiZW1haWwiLCJhY2NvdW50cy1yZWFkIiwiYWNjb3VudHMtd3JpdGUiLCJvcmRlcnMtcmVhZCIsIm9yZGVycy13cml0ZSIsImNvbXBhbmllcy1yZWFkIiwiaW5kaXZpZHVhbHMtcmVhZCIsImZpbmFuY2UtcmVhZCIsInBvc3RzLXdyaXRlIiwicG9zdHMtcmVhZCIsInN5bWJvbHMtcmVhZCIsInVzZXItZGF0YS1yZWFkIiwidXNlci1kYXRhLXdyaXRlIiwidXNlcnMtcmVhZCIsInNlYXJjaCIsImFjYWRlbXktcmVhZCIsImFjYWRlbXktd3JpdGUiLCJibG9nLXJlYWQiLCJpbnZlc3RvcGVkaWEtcmVhZCJdLCJzdWIiOiJjY2Q0OTZkZi0xZGJiLTRlOGQtODIxNC03NmVhMzJkMDI0YzkiLCJhdXRoX3RpbWUiOjE2NzA0Njg5NjAsImlkcCI6Imlkc3J2IiwibmFtZSI6ImJpdmFiaW4xMDBAZ21haWwuY29tIiwic2VjdXJpdHlfc3RhbXAiOiJlZTJkZWY5NC03MGExLTQxODktYjlmZS01N2QyMmM3Mjk4NTkiLCJqdGkiOiJlYzEwNzUwNzZjMGEzNjg"
+    
+    token_2 = "wZDZjY2ExMDc2MWUyOWMyNCIsImFtciI6WyJwYXNzd29yZCJdfQ.VQYlpwEn8Qx6f9CiUVX7d6YP7x6QpfBrOs3td1bjicS1mpIneOO95yxRjDmYFdSFHNG1SpJwof0cvu6bfiuCcl08HPaQscOqv0497y-Z5L8qk9T4EDJfRtMauBTSiR8k1sv21W6-7qZvjTrgGdDWhGojYNadZs0hXnmV0wv-Kx9_bEkUhzt9O78QI9Y1Vb6pjBKhKMk0jQqlLmI_CqLlZ0JJk8Hgr9vcUX91JL5oIieyKcRfZ2gbcSfLpAxSxeEpkU4HWJ-C5B1rqokDjfAJ9fTHM_yRY6zmCz6PljEf0Xoc865br3lRWKSXhjSu127hIQlDmH_rVoZU9JdnekHsLA"
+    
+    Set objRequest = CreateObject("MSXML2.XMLHTTP")
+    strURL = "https://api.fireant.vn/symbols/" & stock_code & "/profile"
+    blnAsync = True
+    
+    With objRequest
+        .Open "GET", strURL, blnAsync
+        .SetRequestHeader "Content-Type", "application/json"
+        .SetRequestHeader "Authorization", token_1 & token_2
+        .Send
+        
+        While objRequest.readyState <> 4
+            DoEvents
+        Wend
+        
+        strResponse = .ResponseText
+        
+    End With
+    
+    Set json = JsonConverter.ParseJson(strResponse)
+    EnglishName = json("internationalName")
+    StockBizEnglishName = EnglishName
+ErrorHandler:
+
+    Exit Function
+End Function
+Function StockBizBusinessDescription(stock_code)
+    Dim objRequest As Object
+    Dim strURL As String
+    Dim token_1 As String
+    Dim token_2 As String
+    Dim json As Object
+    Dim blnAsync As Boolean
+    Dim strResponse As String
+    Dim EnglishName As String
+    
+    On Error GoTo ErrorHandler
+    
+    token_1 = "Bearer eyJ0eXAiOiJKV1QiLCJhbGciOiJSUzI1NiIsIng1dCI6IkdYdExONzViZlZQakdvNERWdjV4QkRITHpnSSIsImtpZCI6IkdYdExONzViZlZQakdvNERWdjV4QkRITHpnSSJ9.eyJpc3MiOiJodHRwczovL2FjY291bnRzLmZpcmVhbnQudm"
+    token_1 = token_1 & "4iLCJhdWQiOiJodHRwczovL2FjY291bnRzLmZpcmVhbnQudm4vcmVzb3VyY2VzIiwiZXhwIjoxOTcwNDY4OTYwLCJuYmYiOjE2NzA0Njg5NjAsImNsaWVudF9pZCI6ImZpcmVhbnQudHJhZGVzdGF0aW9uIiwic2NvcGUiOlsib3BlbmlkIiwicHJvZmlsZSIsInJvbGVzIiwiZW1haWwiLCJhY2NvdW50cy1yZWFkIiwiYWNjb3VudHMtd3JpdGUiLCJvcmRlcnMtcmVhZCIsIm9yZGVycy13cml0ZSIsImNvbXBhbmllcy1yZWFkIiwiaW5kaXZpZHVhbHMtcmVhZCIsImZpbmFuY2UtcmVhZCIsInBvc3RzLXdyaXRlIiwicG9zdHMtcmVhZCIsInN5bWJvbHMtcmVhZCIsInVzZXItZGF0YS1yZWFkIiwidXNlci1kYXRhLXdyaXRlIiwidXNlcnMtcmVhZCIsInNlYXJjaCIsImFjYWRlbXktcmVhZCIsImFjYWRlbXktd3JpdGUiLCJibG9nLXJlYWQiLCJpbnZlc3RvcGVkaWEtcmVhZCJdLCJzdWIiOiJjY2Q0OTZkZi0xZGJiLTRlOGQtODIxNC03NmVhMzJkMDI0YzkiLCJhdXRoX3RpbWUiOjE2NzA0Njg5NjAsImlkcCI6Imlkc3J2IiwibmFtZSI6ImJpdmFiaW4xMDBAZ21haWwuY29tIiwic2VjdXJpdHlfc3RhbXAiOiJlZTJkZWY5NC03MGExLTQxODktYjlmZS01N2QyMmM3Mjk4NTkiLCJqdGkiOiJlYzEwNzUwNzZjMGEzNjg"
+    
+    token_2 = "wZDZjY2ExMDc2MWUyOWMyNCIsImFtciI6WyJwYXNzd29yZCJdfQ.VQYlpwEn8Qx6f9CiUVX7d6YP7x6QpfBrOs3td1bjicS1mpIneOO95yxRjDmYFdSFHNG1SpJwof0cvu6bfiuCcl08HPaQscOqv0497y-Z5L8qk9T4EDJfRtMauBTSiR8k1sv21W6-7qZvjTrgGdDWhGojYNadZs0hXnmV0wv-Kx9_bEkUhzt9O78QI9Y1Vb6pjBKhKMk0jQqlLmI_CqLlZ0JJk8Hgr9vcUX91JL5oIieyKcRfZ2gbcSfLpAxSxeEpkU4HWJ-C5B1rqokDjfAJ9fTHM_yRY6zmCz6PljEf0Xoc865br3lRWKSXhjSu127hIQlDmH_rVoZU9JdnekHsLA"
+    
+    Set objRequest = CreateObject("MSXML2.XMLHTTP")
+    strURL = "https://api.fireant.vn/symbols/" & stock_code & "/profile"
+    blnAsync = True
+    
+    With objRequest
+        .Open "GET", strURL, blnAsync
+        .SetRequestHeader "Content-Type", "application/json"
+        .SetRequestHeader "Authorization", token_1 & token_2
+        .Send
+        
+        While objRequest.readyState <> 4
+            DoEvents
+        Wend
+        
+        strResponse = .ResponseText
+        
+    End With
+    
+    Set json = JsonConverter.ParseJson(strResponse)
+    EnglishName = json("overview")
+    StockBizBusinessDescription = EnglishName
+ErrorHandler:
+
+    Exit Function
+End Function
+Function StockBizWeb(stock_code)
+    Dim objRequest As Object
+    Dim strURL As String
+    Dim token_1 As String
+    Dim token_2 As String
+    Dim json As Object
+    Dim blnAsync As Boolean
+    Dim strResponse As String
+    Dim webAdress As String
+    
+    On Error GoTo ErrorHandler
+    
+    token_1 = "Bearer eyJ0eXAiOiJKV1QiLCJhbGciOiJSUzI1NiIsIng1dCI6IkdYdExONzViZlZQakdvNERWdjV4QkRITHpnSSIsImtpZCI6IkdYdExONzViZlZQakdvNERWdjV4QkRITHpnSSJ9.eyJpc3MiOiJodHRwczovL2FjY291bnRzLmZpcmVhbnQudm"
+    token_1 = token_1 & "4iLCJhdWQiOiJodHRwczovL2FjY291bnRzLmZpcmVhbnQudm4vcmVzb3VyY2VzIiwiZXhwIjoxOTcwNDY4OTYwLCJuYmYiOjE2NzA0Njg5NjAsImNsaWVudF9pZCI6ImZpcmVhbnQudHJhZGVzdGF0aW9uIiwic2NvcGUiOlsib3BlbmlkIiwicHJvZmlsZSIsInJvbGVzIiwiZW1haWwiLCJhY2NvdW50cy1yZWFkIiwiYWNjb3VudHMtd3JpdGUiLCJvcmRlcnMtcmVhZCIsIm9yZGVycy13cml0ZSIsImNvbXBhbmllcy1yZWFkIiwiaW5kaXZpZHVhbHMtcmVhZCIsImZpbmFuY2UtcmVhZCIsInBvc3RzLXdyaXRlIiwicG9zdHMtcmVhZCIsInN5bWJvbHMtcmVhZCIsInVzZXItZGF0YS1yZWFkIiwidXNlci1kYXRhLXdyaXRlIiwidXNlcnMtcmVhZCIsInNlYXJjaCIsImFjYWRlbXktcmVhZCIsImFjYWRlbXktd3JpdGUiLCJibG9nLXJlYWQiLCJpbnZlc3RvcGVkaWEtcmVhZCJdLCJzdWIiOiJjY2Q0OTZkZi0xZGJiLTRlOGQtODIxNC03NmVhMzJkMDI0YzkiLCJhdXRoX3RpbWUiOjE2NzA0Njg5NjAsImlkcCI6Imlkc3J2IiwibmFtZSI6ImJpdmFiaW4xMDBAZ21haWwuY29tIiwic2VjdXJpdHlfc3RhbXAiOiJlZTJkZWY5NC03MGExLTQxODktYjlmZS01N2QyMmM3Mjk4NTkiLCJqdGkiOiJlYzEwNzUwNzZjMGEzNjg"
+    
+    token_2 = "wZDZjY2ExMDc2MWUyOWMyNCIsImFtciI6WyJwYXNzd29yZCJdfQ.VQYlpwEn8Qx6f9CiUVX7d6YP7x6QpfBrOs3td1bjicS1mpIneOO95yxRjDmYFdSFHNG1SpJwof0cvu6bfiuCcl08HPaQscOqv0497y-Z5L8qk9T4EDJfRtMauBTSiR8k1sv21W6-7qZvjTrgGdDWhGojYNadZs0hXnmV0wv-Kx9_bEkUhzt9O78QI9Y1Vb6pjBKhKMk0jQqlLmI_CqLlZ0JJk8Hgr9vcUX91JL5oIieyKcRfZ2gbcSfLpAxSxeEpkU4HWJ-C5B1rqokDjfAJ9fTHM_yRY6zmCz6PljEf0Xoc865br3lRWKSXhjSu127hIQlDmH_rVoZU9JdnekHsLA"
+    
+    Set objRequest = CreateObject("MSXML2.XMLHTTP")
+    strURL = "https://api.fireant.vn/symbols/" & stock_code & "/profile"
+    blnAsync = True
+    
+    With objRequest
+        .Open "GET", strURL, blnAsync
+        .SetRequestHeader "Content-Type", "application/json"
+        .SetRequestHeader "Authorization", token_1 & token_2
+        .Send
+        
+        While objRequest.readyState <> 4
+            DoEvents
+        Wend
+        
+        strResponse = .ResponseText
+        
+    End With
+    
+    Set json = JsonConverter.ParseJson(strResponse)
+    webAdress = json("webAddress")
+    webAdress = Replace(webAdress, " ", vbNullString)
+    
+    If Left(json("webAddress"), 4) <> "http" Then
+        StockBizWeb = "http://" + webAdress
+    Else
+        StockBizWeb = webAdress
+    End If
+    
+ErrorHandler:
+    Exit Function
+End Function
+Public Function StockBizExchange(stock_code)
+    Dim objRequest As Object
+    Dim strURL As String
+    Dim token_1 As String
+    Dim token_2 As String
+    Dim json As Object
+    Dim blnAsync As Boolean
+    Dim strResponse As String
+    
+    token_1 = "Bearer eyJ0eXAiOiJKV1QiLCJhbGciOiJSUzI1NiIsIng1dCI6IkdYdExONzViZlZQakdvNERWdjV4QkRITHpnSSIsImtpZCI6IkdYdExONzViZlZQakdvNERWdjV4QkRITHpnSSJ9.eyJpc3MiOiJodHRwczovL2FjY291bnRzLmZpcmVhbnQudm"
+    token_1 = token_1 & "4iLCJhdWQiOiJodHRwczovL2FjY291bnRzLmZpcmVhbnQudm4vcmVzb3VyY2VzIiwiZXhwIjoxOTcwNDY4OTYwLCJuYmYiOjE2NzA0Njg5NjAsImNsaWVudF9pZCI6ImZpcmVhbnQudHJhZGVzdGF0aW9uIiwic2NvcGUiOlsib3BlbmlkIiwicHJvZmlsZSIsInJvbGVzIiwiZW1haWwiLCJhY2NvdW50cy1yZWFkIiwiYWNjb3VudHMtd3JpdGUiLCJvcmRlcnMtcmVhZCIsIm9yZGVycy13cml0ZSIsImNvbXBhbmllcy1yZWFkIiwiaW5kaXZpZHVhbHMtcmVhZCIsImZpbmFuY2UtcmVhZCIsInBvc3RzLXdyaXRlIiwicG9zdHMtcmVhZCIsInN5bWJvbHMtcmVhZCIsInVzZXItZGF0YS1yZWFkIiwidXNlci1kYXRhLXdyaXRlIiwidXNlcnMtcmVhZCIsInNlYXJjaCIsImFjYWRlbXktcmVhZCIsImFjYWRlbXktd3JpdGUiLCJibG9nLXJlYWQiLCJpbnZlc3RvcGVkaWEtcmVhZCJdLCJzdWIiOiJjY2Q0OTZkZi0xZGJiLTRlOGQtODIxNC03NmVhMzJkMDI0YzkiLCJhdXRoX3RpbWUiOjE2NzA0Njg5NjAsImlkcCI6Imlkc3J2IiwibmFtZSI6ImJpdmFiaW4xMDBAZ21haWwuY29tIiwic2VjdXJpdHlfc3RhbXAiOiJlZTJkZWY5NC03MGExLTQxODktYjlmZS01N2QyMmM3Mjk4NTkiLCJqdGkiOiJlYzEwNzUwNzZjMGEzNjg"
+    
+    token_2 = "wZDZjY2ExMDc2MWUyOWMyNCIsImFtciI6WyJwYXNzd29yZCJdfQ.VQYlpwEn8Qx6f9CiUVX7d6YP7x6QpfBrOs3td1bjicS1mpIneOO95yxRjDmYFdSFHNG1SpJwof0cvu6bfiuCcl08HPaQscOqv0497y-Z5L8qk9T4EDJfRtMauBTSiR8k1sv21W6-7qZvjTrgGdDWhGojYNadZs0hXnmV0wv-Kx9_bEkUhzt9O78QI9Y1Vb6pjBKhKMk0jQqlLmI_CqLlZ0JJk8Hgr9vcUX91JL5oIieyKcRfZ2gbcSfLpAxSxeEpkU4HWJ-C5B1rqokDjfAJ9fTHM_yRY6zmCz6PljEf0Xoc865br3lRWKSXhjSu127hIQlDmH_rVoZU9JdnekHsLA"
+    
+    Set objRequest = CreateObject("MSXML2.XMLHTTP")
+    strURL = "https://api.fireant.vn/symbols/" & stock_code & "/profile"
+    blnAsync = True
+    
+    With objRequest
+        .Open "GET", strURL, blnAsync
+        .SetRequestHeader "Content-Type", "application/json"
+        .SetRequestHeader "Authorization", token_1 & token_2
+        .Send
+        
+        While objRequest.readyState <> 4
+            DoEvents
+        Wend
+        
+        strResponse = .ResponseText
+        
+    End With
+    
+    Set json = JsonConverter.ParseJson(strResponse)
+    If json("exchange") = "HSX" Then
+        StockBizExchange = "HOSE"
+    Else
+        StockBizExchange = json("exchange")
+    End If
+End Function
+Public Function StockBizWebStatus(webAddress)
+    Dim objRequest As Object
+    Dim blnAsync As Boolean
+    'Dim webAddress As String
+    'webAddress = "www.ckda.vn"
+    If webAddress = "" Then
+        blnAsync = False
+    Else
+        blnAsync = True
+        If Left(webAddress, 4) <> "http" Then
+            webAddress = "http://" + webAddress
+        End If
+    End If
+    Set objRequest = CreateObject("MSXML2.XMLHTTP")
+    With objRequest
+        .Open "GET", webAddress, blnAsync
+        .SetRequestHeader "Content-Type", "application/xml"
+        .SetRequestHeader "User-Agent", "Mozilla/5.0 (Windows NT 6.1; rv:25.0) Gecko/20100101 Firefox/25.0"
+        .Send
+        
+        While objRequest.readyState <> 4
+            DoEvents
+        Wend
+        
+        StockBizWebStatus = objRequest.Status
+    End With
+End Function
+Function StockBizBusinessDescription_old(stockcode)
+    Dim ie As New InternetExplorer
+    Dim doc As New HTMLDocument
+    Dim pageData As Object
+    Dim bsnDesc As String
+    
+    On Error GoTo ErrorHandler
+    
+    ie.Visible = True
+    ie.navigate "http://en.stockbiz.vn/Stocks/" + stockcode + "/Snapshot.aspx"
+    Do
+        DoEvents
+    Loop Until ie.readyState = READYSTATE_COMPLETE
+    
+    Set doc = ie.document
+    Set pageData = doc.querySelectorAll("table#ctl00_PlaceHolderContentArea_CenterZone tbody tr td table tbody tr td table.ctl00_PlaceHolderContentArea_CenterZone_1 tbody tr td.NoPadding div")(5)
+    bsnDesc = pageData.innerText
+    
+    If bsnDesc = "" Then
+        StockBizBusinessDescription_old = "-"
+    Else
+        StockBizBusinessDescription_old = Left(bsnDesc, Len(bsnDesc) - 1)
+    End If
+    
+    ie.Quit
+    
+ErrorHandler:
+    ie.Quit
+    Exit Function
+    
+End Function
+Function HexToRGB(sHexVal As String) As Long
+    
+Dim lRed As Long
+Dim lGreen As Long
+Dim lBlue As Long
+
+lRed = CLng("&H" & Left$(sHexVal, 2))
+lGreen = CLng("&H" & Mid$(sHexVal, 3, 2))
+lBlue = CLng("&H" & Right$(sHexVal, 2))
+
+HexToRGB = RGB(lRed, lGreen, lBlue)
+
+End Function
+
+Sub createLink()
+    Dim runIndex As Integer
+    Dim runBln As Boolean
+    Dim i As LongLong
+    Dim stockcode As String
+    
+    runBln = True
+    runIndex = 0
+    i = 2
+    
+    Do While runBln = True
+        If IsEmpty(Cells(i, 1)) = True Then
+            runIndex = runIndex + 1
+        Else
+            stockcode = Cells(i, 1).Value
+            stockcode = Replace(stockcode, " ", "")
+            ActiveCell.Hyperlinks.Add Anchor:=Cells(i, 2), Address:="http://en.stockbiz.vn/Stocks/" + stockcode + "/Snapshot.aspx"
+            Cells(i, 2).Font.Size = 16
+            Dim tempLink As String
+            tempLink = StockBizWeb(Cells(i, 1).Value)
+            Cells(i, 3).Hyperlinks.Add Anchor:=Cells(i, 3), Address:=tempLink
+            Cells(i, 3).Font.Size = 16
+            Rows(i).RowHeight = 30
+            Rows(i).VerticalAlignment = xlCenter
+            runIndex = 0
+        End If
+        
+        If runIndex = 70 Then
+            runBln = False
+        End If
+        i = i + 1
+    Loop
+End Sub
+Public Sub VNeseFS()
+    Dim stock_code As String
+    stock_code = Cells(1, 1).Value
+    Range("A2:XFD1048576").ClearContents
+    Range("A2:XFD1048576").ClearFormats
+    Range("B2:XFD1048576").ClearContents
+    Range("B2:XFD1048576").ClearFormats
+    
+    Dim token_1 As String
+    Dim token_2 As String
+    Dim objRequest As Object
+    Dim blnAsync As Boolean
+    Dim strResponse As String
+    token_1 = "Bearer eyJ0eXAiOiJKV1QiLCJhbGciOiJSUzI1NiIsIng1dCI6IkdYdExONzViZlZQakdvNERWdjV4QkRITHpnSSIsImtpZCI6IkdYdExONzViZlZQakdvNERWdjV4QkRITHpnSSJ9.eyJpc3MiOiJodHRwczovL2FjY291bnRzLmZpcmVhbnQudm"
+    token_1 = token_1 & "4iLCJhdWQiOiJodHRwczovL2FjY291bnRzLmZpcmVhbnQudm4vcmVzb3VyY2VzIiwiZXhwIjoxOTcwNDY4OTYwLCJuYmYiOjE2NzA0Njg5NjAsImNsaWVudF9pZCI6ImZpcmVhbnQudHJhZGVzdGF0aW9uIiwic2NvcGUiOlsib3BlbmlkIiwicHJvZmlsZSIsInJvbGVzIiwiZW1haWwiLCJhY2NvdW50cy1yZWFkIiwiYWNjb3VudHMtd3JpdGUiLCJvcmRlcnMtcmVhZCIsIm9yZGVycy13cml0ZSIsImNvbXBhbmllcy1yZWFkIiwiaW5kaXZpZHVhbHMtcmVhZCIsImZpbmFuY2UtcmVhZCIsInBvc3RzLXdyaXRlIiwicG9zdHMtcmVhZCIsInN5bWJvbHMtcmVhZCIsInVzZXItZGF0YS1yZWFkIiwidXNlci1kYXRhLXdyaXRlIiwidXNlcnMtcmVhZCIsInNlYXJjaCIsImFjYWRlbXktcmVhZCIsImFjYWRlbXktd3JpdGUiLCJibG9nLXJlYWQiLCJpbnZlc3RvcGVkaWEtcmVhZCJdLCJzdWIiOiJjY2Q0OTZkZi0xZGJiLTRlOGQtODIxNC03NmVhMzJkMDI0YzkiLCJhdXRoX3RpbWUiOjE2NzA0Njg5NjAsImlkcCI6Imlkc3J2IiwibmFtZSI6ImJpdmFiaW4xMDBAZ21haWwuY29tIiwic2VjdXJpdHlfc3RhbXAiOiJlZTJkZWY5NC03MGExLTQxODktYjlmZS01N2QyMmM3Mjk4NTkiLCJqdGkiOiJlYzEwNzUwNzZjMGEzNjg"
+    token_2 = "wZDZjY2ExMDc2MWUyOWMyNCIsImFtciI6WyJwYXNzd29yZCJdfQ.VQYlpwEn8Qx6f9CiUVX7d6YP7x6QpfBrOs3td1bjicS1mpIneOO95yxRjDmYFdSFHNG1SpJwof0cvu6bfiuCcl08HPaQscOqv0497y-Z5L8qk9T4EDJfRtMauBTSiR8k1sv21W6-7qZvjTrgGdDWhGojYNadZs0hXnmV0wv-Kx9_bEkUhzt9O78QI9Y1Vb6pjBKhKMk0jQqlLmI_CqLlZ0JJk8Hgr9vcUX91JL5oIieyKcRfZ2gbcSfLpAxSxeEpkU4HWJ-C5B1rqokDjfAJ9fTHM_yRY6zmCz6PljEf0Xoc865br3lRWKSXhjSu127hIQlDmH_rVoZU9JdnekHsLA"
+    
+    Set objRequest = CreateObject("MSXML2.XMLHTTP")
+    strURL = "https://restv2.fireant.vn/symbols/" & stock_code & "/full-financial-reports?type=2&year=2023&quarter=0&limit=5"
+    blnAsync = True
+    
+    With objRequest
+        .Open "GET", strURL, blnAsync
+        .SetRequestHeader "Content-Type", "application/json"
+        .SetRequestHeader "Authorization", token_1 & token_2
+        .Send
+        
+        While objRequest.readyState <> 4
+            DoEvents
+        Wend
+        
+        strResponse = .ResponseText
+        
+    End With
+    
+    Dim json As Object
+    Set json = JsonConverter.ParseJson(strResponse)
+    
+    Cells(2, 1) = "Net Sales"
+    Cells(3, 1) = "COGS"
+    Cells(4, 1) = "Gross Profit"
+    Cells(5, 1) = "Selling Expense"
+    Cells(6, 1) = "G&A Expense"
+    Cells(7, 1) = "EBIT"
+    Cells(8, 1) = "Total Costs"
+    Cells(9, 1) = "ROS"
+    Cells(10, 1) = "MOTC"
+    
+    Dim forLength As Integer
+    forLength = json.Item(4)("values").Count
+    Dim yearIndex As Integer
+    Dim ObjTemp As Object
+    For i = 1 To json.Item(4)("values").Count
+        yearIndex = forLength - i + 1
+        'Retrieve Net Sales
+        Set ObjTemp = json.Item(3)("values")
+        Set ObjTemp = ObjTemp.Item(yearIndex)
+        Cells(1, i + 1) = ObjTemp("year")
+        Cells(2, i + 1) = Format(ObjTemp("value"), "#,###")
+        'Retrieve COGS
+        Set ObjTemp = json.Item(4)("values")
+        Set ObjTemp = ObjTemp.Item(yearIndex)
+        Cells(3, i + 1) = Format(ObjTemp("value"), "#,###")
+        'Calculate Gross Profit
+        Cells(4, i + 1).Formula = "=" & Cells(2, i + 1).Address(False, False) & "-" & Cells(3, i + 1).Address(False, False)
+        'Retrieve Selling Expense
+        Set ObjTemp = json.Item(10)("values")
+        Set ObjTemp = ObjTemp.Item(yearIndex)
+        Cells(5, i + 1) = Format(ObjTemp("value"), "#,###")
+        'Retrieve G&A Expense
+        Set ObjTemp = json.Item(11)("values")
+        Set ObjTemp = ObjTemp.Item(yearIndex)
+        Cells(6, i + 1) = Format(ObjTemp("value"), "#,###")
+        'Calculate EBIT
+        Cells(7, i + 1).Formula = "=" & Cells(4, i + 1).Address(False, False) & "-" & Cells(5, i + 1).Address(False, False) & "-" & Cells(6, i + 1).Address(False, False)
+        'Calculate Total Costs
+        Cells(8, i + 1).Formula = "=" & Cells(2, i + 1).Address(False, False) & "-" & Cells(7, i + 1).Address(False, False)
+        'Calculate ROS
+        Cells(9, i + 1).Formula = "=" & Cells(7, i + 1).Address(False, False) & "/" & Cells(2, i + 1).Address(False, False)
+        Cells(9, i + 1).NumberFormat = "0.00%"
+        'Calculate MOTC
+        Cells(10, i + 1).Formula = "=" & Cells(7, i + 1).Address(False, False) & "/" & Cells(8, i + 1).Address(False, False)
+        Cells(10, i + 1).NumberFormat = "0.00%"
+    Next i
+End Sub
+Public Sub VNeseFS_Beta()
+
+    Dim yearStart As String
+    yearStart = Cells(1, 1).Value
+    Dim noFS As Integer
+    noFS = CInt(Cells(1, 2).Value)
+    
+    Range("A4:XFD1048576").ClearContents
+    Range("A4:XFD1048576").ClearFormats
+    
+    Dim token_1 As String
+    Dim token_2 As String
+    Dim objRequest As Object
+    Dim blnAsync As Boolean
+    Dim strResponse As String
+    token_1 = "Bearer eyJ0eXAiOiJKV1QiLCJhbGciOiJSUzI1NiIsIng1dCI6IkdYdExONzViZlZQakdvNERWdjV4QkRITHpnSSIsImtpZCI6IkdYdExONzViZlZQakdvNERWdjV4QkRITHpnSSJ9.eyJpc3MiOiJodHRwczovL2FjY291bnRzLmZpcmVhbnQudm"
+    token_1 = token_1 & "4iLCJhdWQiOiJodHRwczovL2FjY291bnRzLmZpcmVhbnQudm4vcmVzb3VyY2VzIiwiZXhwIjoxOTcwNDY4OTYwLCJuYmYiOjE2NzA0Njg5NjAsImNsaWVudF9pZCI6ImZpcmVhbnQudHJhZGVzdGF0aW9uIiwic2NvcGUiOlsib3BlbmlkIiwicHJvZmlsZSIsInJvbGVzIiwiZW1haWwiLCJhY2NvdW50cy1yZWFkIiwiYWNjb3VudHMtd3JpdGUiLCJvcmRlcnMtcmVhZCIsIm9yZGVycy13cml0ZSIsImNvbXBhbmllcy1yZWFkIiwiaW5kaXZpZHVhbHMtcmVhZCIsImZpbmFuY2UtcmVhZCIsInBvc3RzLXdyaXRlIiwicG9zdHMtcmVhZCIsInN5bWJvbHMtcmVhZCIsInVzZXItZGF0YS1yZWFkIiwidXNlci1kYXRhLXdyaXRlIiwidXNlcnMtcmVhZCIsInNlYXJjaCIsImFjYWRlbXktcmVhZCIsImFjYWRlbXktd3JpdGUiLCJibG9nLXJlYWQiLCJpbnZlc3RvcGVkaWEtcmVhZCJdLCJzdWIiOiJjY2Q0OTZkZi0xZGJiLTRlOGQtODIxNC03NmVhMzJkMDI0YzkiLCJhdXRoX3RpbWUiOjE2NzA0Njg5NjAsImlkcCI6Imlkc3J2IiwibmFtZSI6ImJpdmFiaW4xMDBAZ21haWwuY29tIiwic2VjdXJpdHlfc3RhbXAiOiJlZTJkZWY5NC03MGExLTQxODktYjlmZS01N2QyMmM3Mjk4NTkiLCJqdGkiOiJlYzEwNzUwNzZjMGEzNjg"
+    token_2 = "wZDZjY2ExMDc2MWUyOWMyNCIsImFtciI6WyJwYXNzd29yZCJdfQ.VQYlpwEn8Qx6f9CiUVX7d6YP7x6QpfBrOs3td1bjicS1mpIneOO95yxRjDmYFdSFHNG1SpJwof0cvu6bfiuCcl08HPaQscOqv0497y-Z5L8qk9T4EDJfRtMauBTSiR8k1sv21W6-7qZvjTrgGdDWhGojYNadZs0hXnmV0wv-Kx9_bEkUhzt9O78QI9Y1Vb6pjBKhKMk0jQqlLmI_CqLlZ0JJk8Hgr9vcUX91JL5oIieyKcRfZ2gbcSfLpAxSxeEpkU4HWJ-C5B1rqokDjfAJ9fTHM_yRY6zmCz6PljEf0Xoc865br3lRWKSXhjSu127hIQlDmH_rVoZU9JdnekHsLA"
+    blnAsync = True
+    
+    Dim irange As Range
+    Dim columnIndex As Integer
+    columnIndex = 1
+    'Header
+    Dim itemArray As Variant
+    itemArray = Array("No.", "Vietnamese Name", "English Name", "Listed Name", "Listed in", "Province")
+    For Each Item In itemArray
+        Set irange = Range(Cells(4, columnIndex), Cells(5, columnIndex))
+        With irange
+            .Merge
+            .HorizontalAlignment = xlCenterAcrossSelection
+            .VerticalAlignment = xlCenter
+            .Value = Item
+        End With
+        columnIndex = columnIndex + 1
+    Next Item
+    'Closing date
+    Set irange = Range(Cells(4, columnIndex), Cells(4, columnIndex + noFS - 1))
+    With irange
+        .Merge
+        .HorizontalAlignment = xlCenterAcrossSelection
+        .VerticalAlignment = xlCenter
+        .Value = "Closing date"
+    End With
+    For i = 1 To noFS
+        Cells(5, columnIndex + i - 1) = CInt(yearStart) - i + 1
+        Cells(5, columnIndex + i - 1).VerticalAlignment = xlCenter
+        Cells(5, columnIndex + i - 1).HorizontalAlignment = xlCenterAcrossSelection
+    Next i
+    columnIndex = columnIndex + noFS
+    
+    itemArray = Array("Sales", "Cost of goods sold", "Gross Profit", "Selling expenses", "SG & A", "EBIT")
+    For Each Item In itemArray
+        Set irange = Range(Cells(4, columnIndex), Cells(4, columnIndex + noFS - 1 + 2))
+        With irange
+            .Merge
+            .HorizontalAlignment = xlCenterAcrossSelection
+            .VerticalAlignment = xlCenter
+            .Value = Item
+        End With
+        For i = 1 To noFS
+            Cells(5, columnIndex + i - 1) = CInt(yearStart) - i + 1
+            Cells(5, columnIndex + i - 1).VerticalAlignment = xlCenter
+            Cells(5, columnIndex + i - 1).HorizontalAlignment = xlCenterAcrossSelection
+        Next i
+        columnIndex = columnIndex + noFS
+        Cells(5, columnIndex) = "Average"
+        Cells(5, columnIndex).VerticalAlignment = xlCenter
+        Cells(5, columnIndex).HorizontalAlignment = xlCenterAcrossSelection
+        columnIndex = columnIndex + 1
+        Cells(5, columnIndex) = "Summation"
+        Cells(5, columnIndex).VerticalAlignment = xlCenter
+        Cells(5, columnIndex).HorizontalAlignment = xlCenterAcrossSelection
+        columnIndex = columnIndex + 1
+    Next Item
+    'Total Cost
+    Set irange = Range(Cells(4, columnIndex), Cells(4, columnIndex + noFS - 1 + 1))
+    With irange
+        .Merge
+        .HorizontalAlignment = xlCenterAcrossSelection
+        .VerticalAlignment = xlCenter
+        .Value = "Total Cost"
+    End With
+    For i = 1 To noFS
+        Cells(5, columnIndex + i - 1) = CInt(yearStart) - i + 1
+        Cells(5, columnIndex + i - 1).VerticalAlignment = xlCenter
+        Cells(5, columnIndex + i - 1).HorizontalAlignment = xlCenterAcrossSelection
+    Next i
+    columnIndex = columnIndex + noFS
+    Cells(5, columnIndex) = "Summation"
+    Cells(5, columnIndex).VerticalAlignment = xlCenter
+    Cells(5, columnIndex).HorizontalAlignment = xlCenterAcrossSelection
+    columnIndex = columnIndex + 1
+    
+    itemArray = Array("Return on Sales (ROS)", "Mark Up on Total Cost(MOTC)")
+    For Each Item In itemArray
+        Set irange = Range(Cells(4, columnIndex), Cells(4, columnIndex + noFS - 1 + 1))
+        With irange
+            .Merge
+            .HorizontalAlignment = xlCenterAcrossSelection
+            .VerticalAlignment = xlCenter
+            .Value = Item
+        End With
+        For i = 1 To noFS
+            Cells(5, columnIndex + i - 1) = CInt(yearStart) - i + 1
+            Cells(5, columnIndex + i - 1).VerticalAlignment = xlCenter
+            Cells(5, columnIndex + i - 1).HorizontalAlignment = xlCenterAcrossSelection
+        Next i
+        columnIndex = columnIndex + noFS
+        Cells(5, columnIndex) = "Average"
+        Cells(5, columnIndex).VerticalAlignment = xlCenter
+        Cells(5, columnIndex).HorizontalAlignment = xlCenterAcrossSelection
+        columnIndex = columnIndex + 1
+    Next Item
+    
+    Dim strTest As String
+    
+    Dim json As Object
+    Dim itemCount As Integer
+    itemCount = 1
+    Dim yearIndex As Integer
+    Dim ObjTemp As Object
+    For Each cell In Rows(2).Value
+        If IsEmpty(cell) = True Then
+            Exit For
+        End If
+        
+        Set objRequest = CreateObject("MSXML2.XMLHTTP")
+        strURL = "https://restv2.fireant.vn/symbols/" & cell & "/full-financial-reports?type=2&year=2023&quarter=0&limit=6"
+        With objRequest
+            .Open "GET", strURL, blnAsync
+            .SetRequestHeader "Content-Type", "application/json"
+            .SetRequestHeader "Authorization", token_1 & token_2
+            .Send
+            While objRequest.readyState <> 4
+                DoEvents
+            Wend
+            strResponse = .ResponseText
+        End With
+        Set json = JsonConverter.ParseJson(strResponse)
+        
+        'Index of yearStart
+        yearIndex = 0
+        Set ObjTemp = json.Item(3)("values")
+        For i = 1 To ObjTemp.Count
+            If ObjTemp.Item(i)("period") = yearStart Then
+                yearIndex = i
+            End If
+        Next i
+        'No.
+        Cells(5 + itemCount, 1) = itemCount
+        'Listed Name
+        Cells(5 + itemCount, 4) = cell
+        If yearIndex = 0 Then
+            GoTo ExitLoop
+        End If
+        'Vietnamese Name
+        'Cells(5 + itemCount, 2) = StockBizVNeseName(cell)
+        'English Name
+        'Cells(5 + itemCount, 3) = StockBizEnglishName(cell)
+
+        'Listed in
+        'Cells(5 + itemCount, 5) = StockBizExchange(cell)
+        'Closing date
+        columnIndex = 7 + noFS
+        '   Net Sales
+        'YoY
+        exitFor = False
+        For i = 1 To noFS
+            Set ObjTemp = json.Item(3)("values")
+            Set ObjTemp = ObjTemp.Item(yearIndex - i + 1)
+           
+            Cells(5 + itemCount, columnIndex) = Format(ObjTemp("value"), "0,000")
+            columnIndex = columnIndex + 1
+        Next i
+        If exitFor = True Then
+            Exit For
+        End If
+        'Calculate Average
+        Cells(5 + itemCount, columnIndex).Formula = "=if(countblank(" & Cells(5 + itemCount, columnIndex - noFS).Address(False, False) & ":" & Cells(5 + itemCount, columnIndex - 1).Address(False, False) & ")=3,""""," & "average(" & Cells(5 + itemCount, columnIndex - noFS).Address(False, False) & ":" & Cells(5 + itemCount, columnIndex - 1).Address(False, False) & "))"
+        Cells(5 + itemCount, columnIndex).NumberFormat = "0,000.00"
+        columnIndex = columnIndex + 1
+        'Calculate Summation
+        Cells(5 + itemCount, columnIndex).Formula = "=if(countblank(" & Cells(5 + itemCount, columnIndex - 1 - noFS).Address(False, False) & ":" & Cells(5 + itemCount, columnIndex - 1 - 1).Address(False, False) & ")=3,""""," & "sum(" & Cells(5 + itemCount, columnIndex - 1 - noFS).Address(False, False) & ":" & Cells(5 + itemCount, columnIndex - 1 - 1).Address(False, False) & "))"
+        Cells(5 + itemCount, columnIndex).NumberFormat = "0,000"
+        columnIndex = columnIndex + 1
+        '   COGS
+        'YoY
+        For i = 1 To noFS
+            Set ObjTemp = json.Item(4)("values")
+            Set ObjTemp = ObjTemp.Item(yearIndex - i + 1)
+            Cells(5 + itemCount, columnIndex) = Format(ObjTemp("value"), "0,000")
+            columnIndex = columnIndex + 1
+        Next i
+        'Calculate Average
+        Cells(5 + itemCount, columnIndex).Formula = "=if(countblank(" & Cells(5 + itemCount, columnIndex - noFS).Address(False, False) & ":" & Cells(5 + itemCount, columnIndex - 1).Address(False, False) & ")=3,""""," & "average(" & Cells(5 + itemCount, columnIndex - noFS).Address(False, False) & ":" & Cells(5 + itemCount, columnIndex - 1).Address(False, False) & "))"
+        Cells(5 + itemCount, columnIndex).NumberFormat = "0,000.00"
+        columnIndex = columnIndex + 1
+        'Calculate Summation
+        Cells(5 + itemCount, columnIndex).Formula = "=if(countblank(" & Cells(5 + itemCount, columnIndex - 1 - noFS).Address(False, False) & ":" & Cells(5 + itemCount, columnIndex - 1 - 1).Address(False, False) & ")=3,""""," & "sum(" & Cells(5 + itemCount, columnIndex - 1 - noFS).Address(False, False) & ":" & Cells(5 + itemCount, columnIndex - 1 - 1).Address(False, False) & "))"
+        Cells(5 + itemCount, columnIndex).NumberFormat = "0,000"
+        columnIndex = columnIndex + 1
+        '   Gross Profit
+        'YoY
+        For i = 1 To noFS
+            Cells(5 + itemCount, columnIndex).Formula = "=" & Cells(5 + itemCount, columnIndex - (noFS + 2) * 2).Address(False, False) & "-" & Cells(5 + itemCount, columnIndex - (noFS + 2) * 1).Address(False, False)
+            columnIndex = columnIndex + 1
+        Next i
+        'Calculate Average
+        Cells(5 + itemCount, columnIndex).Formula = "=if(countblank(" & Cells(5 + itemCount, columnIndex - noFS).Address(False, False) & ":" & Cells(5 + itemCount, columnIndex - 1).Address(False, False) & ")=3,""""," & "average(" & Cells(5 + itemCount, columnIndex - noFS).Address(False, False) & ":" & Cells(5 + itemCount, columnIndex - 1).Address(False, False) & "))"
+        Cells(5 + itemCount, columnIndex).NumberFormat = "0,000.00"
+        columnIndex = columnIndex + 1
+        'Calculate Summation
+        Cells(5 + itemCount, columnIndex).Formula = "=if(countblank(" & Cells(5 + itemCount, columnIndex - 1 - noFS).Address(False, False) & ":" & Cells(5 + itemCount, columnIndex - 1 - 1).Address(False, False) & ")=3,""""," & "sum(" & Cells(5 + itemCount, columnIndex - 1 - noFS).Address(False, False) & ":" & Cells(5 + itemCount, columnIndex - 1 - 1).Address(False, False) & "))"
+        Cells(5 + itemCount, columnIndex).NumberFormat = "0,000"
+        columnIndex = columnIndex + 1
+        '   Selling expenses
+        'YoY
+        For i = 1 To noFS
+            Set ObjTemp = json.Item(10)("values")
+            Set ObjTemp = ObjTemp.Item(yearIndex - i + 1)
+            Cells(5 + itemCount, columnIndex) = Format(ObjTemp("value"), "0,000")
+            columnIndex = columnIndex + 1
+        Next i
+        'Calculate Average
+        Cells(5 + itemCount, columnIndex).Formula = "=if(countblank(" & Cells(5 + itemCount, columnIndex - noFS).Address(False, False) & ":" & Cells(5 + itemCount, columnIndex - 1).Address(False, False) & ")=3,""""," & "average(" & Cells(5 + itemCount, columnIndex - noFS).Address(False, False) & ":" & Cells(5 + itemCount, columnIndex - 1).Address(False, False) & "))"
+        Cells(5 + itemCount, columnIndex).NumberFormat = "0,000.00"
+        columnIndex = columnIndex + 1
+        'Calculate Summation
+        Cells(5 + itemCount, columnIndex).Formula = "=if(countblank(" & Cells(5 + itemCount, columnIndex - 1 - noFS).Address(False, False) & ":" & Cells(5 + itemCount, columnIndex - 1 - 1).Address(False, False) & ")=3,""""," & "sum(" & Cells(5 + itemCount, columnIndex - 1 - noFS).Address(False, False) & ":" & Cells(5 + itemCount, columnIndex - 1 - 1).Address(False, False) & "))"
+        Cells(5 + itemCount, columnIndex).NumberFormat = "0,000"
+        columnIndex = columnIndex + 1
+        '   SG & A
+        'YoY
+        For i = 1 To noFS
+            Set ObjTemp = json.Item(11)("values")
+            Set ObjTemp = ObjTemp.Item(yearIndex - i + 1)
+            Cells(5 + itemCount, columnIndex) = Format(ObjTemp("value"), "0,000")
+            columnIndex = columnIndex + 1
+        Next i
+        'Calculate Average
+        Cells(5 + itemCount, columnIndex).Formula = "=if(countblank(" & Cells(5 + itemCount, columnIndex - noFS).Address(False, False) & ":" & Cells(5 + itemCount, columnIndex - 1).Address(False, False) & ")=3,""""," & "average(" & Cells(5 + itemCount, columnIndex - noFS).Address(False, False) & ":" & Cells(5 + itemCount, columnIndex - 1).Address(False, False) & "))"
+        Cells(5 + itemCount, columnIndex).NumberFormat = "0,000.00"
+        columnIndex = columnIndex + 1
+        'Calculate Summation
+        Cells(5 + itemCount, columnIndex).Formula = "=if(countblank(" & Cells(5 + itemCount, columnIndex - 1 - noFS).Address(False, False) & ":" & Cells(5 + itemCount, columnIndex - 1 - 1).Address(False, False) & ")=3,""""," & "sum(" & Cells(5 + itemCount, columnIndex - 1 - noFS).Address(False, False) & ":" & Cells(5 + itemCount, columnIndex - 1 - 1).Address(False, False) & "))"
+        Cells(5 + itemCount, columnIndex).NumberFormat = "0,000"
+        columnIndex = columnIndex + 1
+        '   EBIT
+        'YoY
+        For i = 1 To noFS
+            Cells(5 + itemCount, columnIndex).Formula = "=" & Cells(5 + itemCount, columnIndex - (noFS + 2) * 3).Address(False, False) & "-" & Cells(5 + itemCount, columnIndex - (noFS + 2) * 2).Address(False, False) & "-" & Cells(5 + itemCount, columnIndex - (noFS + 2) * 1).Address(False, False)
+            columnIndex = columnIndex + 1
+        Next i
+                'Calculate Average
+        Cells(5 + itemCount, columnIndex).Formula = "=if(countblank(" & Cells(5 + itemCount, columnIndex - noFS).Address(False, False) & ":" & Cells(5 + itemCount, columnIndex - 1).Address(False, False) & ")=3,""""," & "average(" & Cells(5 + itemCount, columnIndex - noFS).Address(False, False) & ":" & Cells(5 + itemCount, columnIndex - 1).Address(False, False) & "))"
+        Cells(5 + itemCount, columnIndex).NumberFormat = "0,000.00"
+        columnIndex = columnIndex + 1
+        'Calculate Summation
+        Cells(5 + itemCount, columnIndex).Formula = "=if(countblank(" & Cells(5 + itemCount, columnIndex - 1 - noFS).Address(False, False) & ":" & Cells(5 + itemCount, columnIndex - 1 - 1).Address(False, False) & ")=3,""""," & "sum(" & Cells(5 + itemCount, columnIndex - 1 - noFS).Address(False, False) & ":" & Cells(5 + itemCount, columnIndex - 1 - 1).Address(False, False) & "))"
+        Cells(5 + itemCount, columnIndex).NumberFormat = "0,000"
+        columnIndex = columnIndex + 1
+        '   Total Cost
+        'YoY
+        For i = 1 To noFS
+            Cells(5 + itemCount, columnIndex).Formula = "=if(or(" & Cells(5 + itemCount, columnIndex - (noFS + 2) * 6).Address(False, False) & "=0," & Cells(5 + itemCount, columnIndex - (noFS + 2) * 6).Address(False, False) & "=""""," & Cells(5 + itemCount, columnIndex - (noFS + 2) * 1).Address(False, False) & "=""""),""""," & Cells(5 + itemCount, columnIndex - (noFS + 2) * 6).Address(False, False) & "-" & Cells(5 + itemCount, columnIndex - (noFS + 2) * 1).Address(False, False) & ")"
+            Cells(5 + itemCount, columnIndex).NumberFormat = "0,000"
+            columnIndex = columnIndex + 1
+        Next i
+        'summation
+        Cells(5 + itemCount, columnIndex).Formula = "=if(countblank(" & Cells(5 + itemCount, columnIndex - noFS).Address(False, False) & ":" & Cells(5 + itemCount, columnIndex - 1).Address(False, False) & ")=3,""""," & "sum(" & Cells(5 + itemCount, columnIndex - noFS).Address(False, False) & ":" & Cells(5 + itemCount, columnIndex - 1).Address(False, False) & "))"
+        Cells(5 + itemCount, columnIndex).NumberFormat = "0,000"
+        columnIndex = columnIndex + 1
+        '   ROS
+        'YoY
+        For i = 1 To noFS
+            Cells(5 + itemCount, columnIndex).Formula = "=if(or(or(" & Cells(5 + itemCount, columnIndex + 1 - (noFS + 2) * 7).Address(False, False) & "=""""," & Cells(5 + itemCount, columnIndex + 1 - (noFS + 2) * 2).Address(False, False) & "=""""),or(" & Cells(5 + itemCount, columnIndex + 1 - (noFS + 2) * 7).Address(False, False) & "=0," & Cells(5 + itemCount, columnIndex + 1 - (noFS + 2) * 2).Address(False, False) & "="""")),""""," & Cells(5 + itemCount, columnIndex + 1 - (noFS + 2) * 2).Address(False, False) & "/" & Cells(5 + itemCount, columnIndex + 1 - (noFS + 2) * 7).Address(False, False) & ")"
+            Cells(5 + itemCount, columnIndex).NumberFormat = "0.00%"
+            columnIndex = columnIndex + 1
+        Next i
+        'Average
+        Cells(5 + itemCount, columnIndex).Formula = "=iferror(" & Cells(5 + itemCount, columnIndex - (noFS + 1) * 2).Address(False, False) & "/" & Cells(5 + itemCount, columnIndex + 2 - (noFS + 2) * 7).Address(False, False) & ","""")"
+        Cells(5 + itemCount, columnIndex).NumberFormat = "0.00%"
+        columnIndex = columnIndex + 1
+        '   MOTC
+        'YoY
+        For i = 1 To noFS
+            Cells(5 + itemCount, columnIndex).Formula = "=if(or(or(" & Cells(5 + itemCount, columnIndex - (noFS + 1) * 2 - (noFS + 2)).Address(False, False) & "=""""," & Cells(5 + itemCount, columnIndex - (noFS + 1) * 2).Address(False, False) & "=""""),or(" & Cells(5 + itemCount, columnIndex - (noFS + 1) * 2 - (noFS + 2)).Address(False, False) & "=""""," & Cells(5 + itemCount, columnIndex - (noFS + 1) * 2).Address(False, False) & "=0)),""""," & Cells(5 + itemCount, columnIndex - (noFS + 1) * 2 - (noFS + 2)).Address(False, False) & "/" & Cells(5 + itemCount, columnIndex - (noFS + 1) * 2).Address(False, False) & ")"
+            Cells(5 + itemCount, columnIndex).NumberFormat = "0.00%"
+            columnIndex = columnIndex + 1
+        Next i
+        'Average
+        Cells(5 + itemCount, columnIndex).Formula = "=iferror(" & Cells(5 + itemCount, columnIndex - (noFS + 1) * 3).Address(False, False) & " /" & Cells(5 + itemCount, columnIndex - (noFS + 1) * 2).Address(False, False) & ","""")"
+        Cells(5 + itemCount, columnIndex).NumberFormat = "0.00%"
+        columnIndex = columnIndex + 1
+ExitLoop:
+        itemCount = itemCount + 1
+    Next cell
+End Sub
+Public Function VietStockReference(stockcode As String)
+    VietStockReference = "https://finance.vietstock.vn/" + stockcode + "/profile.htm"
+End Function
+
+Function MOTC(NS, COGS, SE, GAE)
+    Dim GProfit As LongLong
+    Dim EBIT As LongLong
+    
+    GProfit = NS - COGS
+    EBIT = GProfit - SE - GAE
+    If (NS - EBIT) = 0 Then
+        MOTC = 0
+    Else
+        MOTC = EBIT / (NS - EBIT)
+    End If
+End Function
+
+Function ROS(NS, COGS, SE, GAE)
+    Dim GProfit As LongLong
+    Dim EBIT As LongLong
+    
+    GProfit = NS - COGS
+    EBIT = GProfit - SE - GAE
+    If NS = 0 Then
+        ROS = 0
+    Else
+        ROS = EBIT / NS
+    End If
+End Function
+
+Function isVietnamese(tempStr) As Boolean
+    Dim tempBln As Boolean
+    tempBln = False
+    If InStr(1, LCase(tempStr), "ctcp", vbTextCompare) > 0 Then
+        isVietnamese = True
+        Exit Function
+    End If
+    
+    Dim testStr As String
+    For i = 1 To Len(tempStr)
+        testStr = Mid(tempStr, i, 1)
+        If IsVietnameseCharacter(testStr) Then
+            isVietnamese = True
+            Exit Function
+        End If
+    Next i
+    
+End Function
+
+Function IsVietnameseCharacter(character As String) As Boolean
+    Dim charCode As Integer
+    charCode = AscW(character)
+    
+    Dim VNeseChar As Variant
+    VNeseChar = Array("224", "225", "226", "227", "232", "233", "234", "236", "237", "242", "243", "244", "245", "249", "250", "253", "259", "273", "297", "361", "417", "432", "7841", "7843", "7845", "7847", "7849", "7851", "7853", "7855", "7857", "7859", "7861", "7863", "7865", "7867", "7869", "7871", "7873", "7875", "7877", "7879", "7881", "7883", "7885", "7887", "7889", "7891", "7893", "7895", "7897", "7899", "7901", "7903", "7905", "7907", "7909", "7911", "7913", "7915", "7917", "7919", "7921", "7923", "7925", "7927", "7929")
+    
+    For i = 0 To 66
+    Debug.Print VNeseChar(i)
+        If CStr(charCode) = VNeseChar(i) Then
+            IsVietnameseCharacter = True
+            Exit Function
+        End If
+    Next i
+End Function
+
+Function VietStockEnglishName(stockcode)
+    Dim ie As New InternetExplorer
+    Dim doc As New HTMLDocument
+    Dim pageData As Object
+    Dim data As String
+    
+    On Error GoTo ErrorHandler
+    
+    With ie
+        .Visible = True
+        .Silent = True
+        .navigate "https://finance.vietstock.vn/" + stockcode + "/profile.htm?languageid=2"
+    End With
+
+    Do
+        DoEvents
+    Loop Until ie.readyState = READYSTATE_COMPLETE
+    
+    Set doc = ie.document
+    Set pageData = doc.querySelector("h1.h1-title b")
+    
+    Dim tempStr As String
+    tempStr = pageData.innerText
+    
+    If Right(tempStr, 1) = " " Then
+        VietStockEnglishName = Left(tempStr, Len(tempStr) - 1)
+    Else
+        VietStockEnglishName = tempStr
+    End If
+    
+    ie.Quit
+    
+ErrorHandler:
+    ie.Quit
+    Exit Function
+
+End Function
