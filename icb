@@ -1,0 +1,132 @@
+print('# Start')
+from datetime import datetime
+current_datetime = datetime.now()
+current_date = current_datetime.day
+current_month = current_datetime.month
+current_year = current_datetime.year
+
+import time
+startTime = time.time()
+
+import os
+current_directory = os.getcwd()
+path = os.getcwd()
+
+import openpyxl
+wb = openpyxl.load_workbook(path + '/Excel/StockBiz.xlsx')
+ws_summary = wb['Summary']
+print('# Open Excel')
+
+import requests
+import json
+headers = {"Content-Type": "Application/json", "Authorization": "Bearer eyJ0eXAiOiJKV1QiLCJhbGciOiJSUzI1NiIsIng1dCI6IkdYdExONzViZlZQakdvNERWdjV4QkRITHpnSSIsImtpZCI6IkdYdExONzViZlZQakdvNERWdjV4QkRITHpnSSJ9.eyJpc3MiOiJodHRwczovL2FjY291bnRzLmZpcmVhbnQudm4iLCJhdWQiOiJodHRwczovL2FjY291bnRzLmZpcmVhbnQudm4vcmVzb3VyY2VzIiwiZXhwIjoyMDAzNTYwOTU3LCJuYmYiOjE3MDM1NjA5NTcsImNsaWVudF9pZCI6InN0b2NrYml6LndlYiIsInNjb3BlIjpbIm9wZW5pZCIsInByb2ZpbGUiLCJyb2xlcyIsImVtYWlsIiwiYWNjb3VudHMtcmVhZCIsImFjY291bnRzLXdyaXRlIiwib3JkZXJzLXJlYWQiLCJvcmRlcnMtd3JpdGUiLCJjb21wYW5pZXMtcmVhZCIsImluZGl2aWR1YWxzLXJlYWQiLCJmaW5hbmNlLXJlYWQiLCJwb3N0cy13cml0ZSIsInBvc3RzLXJlYWQiLCJzeW1ib2xzLXJlYWQiLCJ1c2VyLWRhdGEtcmVhZCIsInVzZXItZGF0YS13cml0ZSIsInVzZXJzLXJlYWQiLCJzZWFyY2giLCJhY2FkZW15LXJlYWQiLCJhY2FkZW15LXdyaXRlIiwiYmxvZy1yZWFkIiwiaW52ZXN0b3BlZGlhLXJlYWQiXSwic3ViIjoiMjczZjM2YjQtYmYxZS00ODVkLWFkY2ItMDU5OGExMTMxODI5IiwiYXV0aF90aW1lIjoxNzAzNTYwOTU3LCJpZHAiOiJHb29nbGUiLCJuYW1lIjoidm8ubGUueHVhbi50dW5nQHB3Yy5jb20iLCJzZWN1cml0eV9zdGFtcCI6ImFhMjFmNzc3LWY5NmYtNDEwMS05Mzk5LTgxZmUxYWNlNDZiMiIsImp0aSI6IjI1NjE2Y2ZkODRlNGFlYjU5ZGM2ZGFiY2Q0OWYyYzNlIiwiYW1yIjpbImV4dGVybmFsIl19.cnTscfQVW86c7cc27xOX51ukl8Ih-yJO_iqE5E1U35WD09IXID6hmo6liYSnY0Qlb-mQkYI_wtBHfa1GBo2K_5O84bldqVLaowx_FCZNSevAVF8jeJsMukND2SrfntANX2goC0_bVaki4knR7HQ77BNiq0nFvCndkEMKiLOFV2CzFy4dnqjdM4Ub2i1QN1G9yOxMS1q8zLmvwQECs9OWBFkfqxmCPgg4sjoigTtehhwp66i02NvzAvZjELdlLVExXUSvhhPWeaavp2yVC4mLivfdF7Me9GhjPBmjVUP-M-fk8AnHZ7BQaOY55Fdm2XUChf_g_gD0rJCg-uEZTMd8fQ"}
+res = requests.get('https://api.fireant.vn/instruments', headers = headers)
+response = json.loads(res.text)
+print('# Collect stock codes')
+
+rowIndex = 1
+count = {
+    'stock': {
+        'i': 0,
+        'name': 'stock (cổ phiếu)'
+    },
+    'index': {
+        'i': 0,
+        'name': 'index (chỉ số)'
+    },
+    'futures': {
+        'i': 0,
+        'name': 'futures (hợp đồng tương lai)'
+    },
+    'warrant': {
+        'i': 0,
+        'name': 'warrant (chứng quyền)'
+    },
+    'fund': {
+        'i': 0,
+        'name': 'fund (quỹ)'
+    },
+    'bond': {
+        'i': 0,
+        'name': 'bond (trái phiếu)'
+    },
+    'commodity': {
+        'i': 0,
+        'name': 'commodity (hàng hóa)'
+    }
+}
+
+for instrument in response:
+    count[instrument['type']]['i'] += 1
+    if instrument['type'] == 'stock': 
+        print(str(rowIndex), end = '\r')
+        link_stockCode = 'https://api.fireant.vn/symbols/' + instrument['symbol'] + '/profile'
+        res_stockCode = requests.get(link_stockCode, headers = headers)
+        response_stockCode = json.loads(res_stockCode.text)
+        if response_stockCode['isListed'] == False:
+            continue
+
+        ws_summary.cell(row=rowIndex, column = 1).value = instrument['symbol']
+        try:
+            ws_summary.cell(row=rowIndex, column = 2).value = response_stockCode['icbCode']
+        except:
+            ws_summary.cell(row=rowIndex, column = 2).value = 'error'
+        try:
+            ws_summary.cell(row=rowIndex, column = 3).value = response_stockCode['companyName']
+        except:
+            ws_summary.cell(row=rowIndex, column = 3).value = 'error'
+        try:
+            ws_summary.cell(row=rowIndex, column = 4).value = response_stockCode['internationalName']
+        except:
+            ws_summary.cell(row=rowIndex, column = 4).value = 'error'
+        try:
+            ws_summary.cell(row=rowIndex, column = 5).value = response_stockCode['exchange']
+        except:
+            ws_summary.cell(row=rowIndex, column = 5).value = 'error'
+        ws_summary.cell(row=rowIndex, column = 6).value = response_stockCode['overview']
+        ws_summary.cell(row=rowIndex, column = 8).value = response_stockCode['webAddress']
+
+        # link_shareholder = 'https://api.fireant.vn/symbols/' + instrument['symbol'] + '/holders'
+        # res_shareholder = requests.get(link_shareholder, headers = headers)
+        # response_shareholder = json.loads(res_shareholder.text)
+        # try:
+        #     ownership = '{:.2%}'.format(response_shareholder[0]['ownership'])
+        # except:
+        #     ownership = 'error'
+        # try:
+        #     ws_summary.cell(row=rowIndex, column = 7).value = response_shareholder[0]['name'] + ' - ' + str(ownership)
+        # except:
+        #     ws_summary.cell(row=rowIndex, column = 7).value = 'error'
+        
+        rowIndex +=1
+
+print('\nCompleted')
+file_name = "StockBiz - " + str(current_date) + "." + str(current_month) + "." + str(current_year)
+wb.save(file_name + ".xlsx")
+
+# try:
+#     wb.save(file_name + ".xlsx")
+# except :
+#     while_bln = True
+#     i=1
+#     while while_bln == True:
+#         try:
+#             wb.save(file_name + "(" + str(i) + ")" + ".xlsx")
+#             break
+#         except:
+#             i += 1
+
+processing_time = int(time.time() - startTime)
+print(f"Total companies under Instrument link: {len(response)}")
+for item in count:
+    print(f"Number of companies classified under {count[item]['name']}: {str(count[item]['i'])}")
+
+if processing_time < 60:
+    print("# Running Time: " + str(processing_time) + " s")
+elif processing_time < 3599:
+    print("# Running Time: " + str(processing_time//60) + "m" + str(processing_time%60) + "s")
+else:
+    print("# Running Time: " + str(processing_time//3600) + "h" + str(processing_time//3600//60) + "m" + str(processing_time//3600%60) + "s")
+
+print("Press any key to continue...")
+input()
