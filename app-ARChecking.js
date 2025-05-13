@@ -104,7 +104,7 @@ function segmentDisplay() {
     btn.classList.add("tpi-box-orange", "margin-l", "padding-m", "cursor-pointer");
     output.appendChild(btn);
     document.querySelector("#output1_1 button").addEventListener('click', function() {
-        copyText("#output1_1 div`");
+        copyText("#output1_1 div");
     })
     //segment display --- end
 
