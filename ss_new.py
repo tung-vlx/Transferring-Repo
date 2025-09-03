@@ -35,7 +35,7 @@ def stock_code_screenshot(stock_code, ws, row_index):
     chrome.get('https://stockbiz.vn/ma-chung-khoan/' + stock_code)
     chrome.execute_script('window.scrollTo(0,80)')
     chrome.execute_script("document.body.style.zoom='85%'")
-    time.sleep(2)
+    time.sleep(3)
     try:
         element_more = chrome.find_elements(By.CLASS_NAME, 'py-4')[1]
         element_more = element_more.find_element(By.TAG_NAME, 'a')
@@ -43,18 +43,45 @@ def stock_code_screenshot(stock_code, ws, row_index):
     except:
         print('', end='\r')
     image_name = 'Excel/resource/' + stock_code + '-1.png'
+    try:
+        try:
+            element_ads = chrome.find_elements(By.XPATH, '/html/body/ins[2]/div[2]//ins/span/svg/path')
+        except:
+            element_ads = chrome.find_elements(By.XPATH, '/html/body/ins[2]/div[1]//ins/span/svg/path')
+        chrome.execute_script("arguments[0].click(0);", element_ads)
+    except:
+        pass
+
     chrome.save_screenshot(image_name)
 
-    element_shareholder = chrome.find_element(By.XPATH, '//*[@id="__next"]/div[3]/div/main/div/div[2]/div[1]/ul/li[2]/div')
-    chrome.execute_script ("arguments[0].click();", element_shareholder)
-    element_shareholder = chrome.find_element(By.CLASS_NAME, 'my-6')
     chrome.execute_script('window.scrollTo(0,2000)')
     time.sleep(0.5)
     chrome.execute_script('window.scrollTo(0,-2000)')
     time.sleep(0.5)
-    chrome.execute_script('window.scrollTo(0,' + str((element_shareholder.location['y']-element_shareholder.size['height'])*0.85) + ')')
+    try:
+        element_shareholder = chrome.find_element(By.XPATH, '//*[@id="__next"]/div[3]/div/main/div/div[2]/div[1]/ul/li[2]/div')
+    except:
+        element_shareholder = chrome.find_element(By.XPATH, '//*[@id="__next"]/div[3]/div/main/div/div[3]/div[1]/ul/li[2]/div') #//*[@id="__next"]/div[3]/div/main/div/div[3]/div[1]/ul/li[2]/div
+    chrome.execute_script ("arguments[0].click();", element_shareholder)
     time.sleep(0.5)
+    try: 
+        element_shareholder = chrome.find_element(By.CLASS_NAME, 'my-6')
+    except:
+        try:
+            element_shareholder = chrome.find_element(By.XPATH, '//*[@id="__next"]/div[3]/div/main/div/div[2]')
+        except:
+            element_shareholder = chrome.find_element(By.XPATH, '//*[@id="__next"]/div[3]/div/main/div/div[2]')
+    print(f'{element_shareholder.location}')
+    chrome.execute_script('window.scrollTo(0,' + str((element_shareholder.location['y']-100)) + ')')
+    time.sleep(0.5)
+
     image_name = 'Excel/resource/' + stock_code + '-2.png'
+    
+    try:
+        element_ads = chrome.find_elements(By.XPATH, '/html/body/ins[2]/div[2]//ins/span/svg/path')
+        chrome.execute_script("arguments[0].click(0);", element_ads)
+    except:
+        pass
     chrome.save_screenshot(image_name)
     insert_image(ws, stock_code, row_index)
 
